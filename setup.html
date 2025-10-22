@@ -41,11 +41,11 @@
             <h1 class="text-2xl font-bold text-blue-400 text-center">Lone Worker Safety System - Setup Tool</h1>
         </div>
         <div class="step-nav flex flex-wrap justify-center bg-gray-700 p-2 shadow-inner">
-            <button id="nav1" onclick="showStep(1)" class="current px-3 py-2 text-sm font-medium rounded-md m-1" disabled>Step 1: Welcome</button>
-            <button id="nav2" onclick="showStep(2)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 2: Sheet Setup</button>
-            <button id="nav3" onclick="showStep(3)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 3: Deploy Script</button>
-            <button id="nav4" onclick="showStep(4)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 4: Configure Apps</button>
-            <button id="nav5" onclick="showStep(5)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 5: Download</button>
+            <button type="button" id="nav1" onclick="showStep(1)" class="current px-3 py-2 text-sm font-medium rounded-md m-1" disabled>Step 1: Welcome</button>
+            <button type="button" id="nav2" onclick="showStep(2)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 2: Sheet Setup</button>
+            <button type="button" id="nav3" onclick="showStep(3)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 3: Deploy Script</button>
+            <button type="button" id="nav4" onclick="showStep(4)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 4: Configure Apps</button>
+            <button type="button" id="nav5" onclick="showStep(5)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 5: Download</button>
         </div>
         
         <div class="p-6 md:p-8">
@@ -53,7 +53,7 @@
                 <h2 class="text-xl font-semibold mb-4 text-blue-300">Welcome to the LWS Setup Wizard</h2>
                 <p class="text-gray-300 mb-4">This tool will guide you through creating and customizing your Lone Worker Safety system. It will generate a `.zip` file containing the final, ready-to-host applications for your workers and monitors.</p>
                 <p class="text-gray-300 mb-6">Follow the steps in order. This page will fetch the necessary template files from this repository to build your custom package.</p>
-                <button onclick="nextStep()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg">Start Setup</button>
+                <button type="button" onclick="nextStep()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg">Start Setup</button>
             </div>
 
             <div id="step2" class="step">
@@ -65,10 +65,10 @@
                     <li>Paste the headers. They should fill row 1 from cell A to R.</li>
                 </ol>
                 <div class="relative bg-gray-900 rounded-lg p-4 font-mono text-sm text-gray-400 pr-16 mb-4">
-                    <button id="copyHeadersBtn" onclick="copyToClipboard('headersText', this)" class="copy-btn">Copy</button>
+                    <button type="button" id="copyHeadersBtn" onclick="copyToClipboard('headersText', this)" class="copy-btn">Copy</button>
                     <p id="headersText" class="overflow-x-auto">Date,Worker Name,Worker Phone Number,Emergency Contact Name,Emergency Contact Number,Emergency Contact Email,Escalation Contact Name,Escalation Contact Number,Escalation Contact Email,Location Name,Location Address,Arrival Time,Anticipated Departure Time,Actual Departure Time,Alarm Status,Notes,Last Known GPS,GPS Timestamp</p>
                 </div>
-                <button onclick="nextStep()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg">Next Step</button>
+                <button type="button" onclick="nextStep()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg">Next Step</button>
             </div>
 
             <div id="step3" class="step">
@@ -104,10 +104,10 @@
                 </div>
 
                 <div class="relative bg-gray-900 rounded-lg mb-4 h-64 overflow-y-auto">
-                    <button id="copyScriptBtn" onclick="copyInjectedScript(this)" class="copy-btn z-10">Copy Script</button>
+                    <button type="button" id="copyScriptBtn" onclick="copyInjectedScript(this)" class="copy-btn z-10">Copy Script</button>
                     <pre id="scriptPreview" class="p-4 text-xs text-gray-400">Loading script preview...</pre>
                 </div>
-                <button onclick="nextStep()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg">Next Step</button>
+                <button type="button" onclick="nextStep()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg">Next Step</button>
             </div>
 
             <div id="step4" class="step">
@@ -138,14 +138,14 @@
                         <p class="text-xs text-gray-400 mt-1">If provided, this will replace the default icon for the Worker PWA.</p>
                     </div>
                 </div>
-                <button onclick="testAndProceed()" class="mt-8 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg">Test Connection & Proceed</button>
+                <button type="button" onclick="testAndProceed()" class="mt-8 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg">Test Connection & Proceed</button>
                 <p id="testStatus" class="text-center text-yellow-400 mt-4 h-4"></p>
             </div>
 
             <div id="step5" class="step">
                 <h2 class="text-xl font-semibold mb-4 text-green-400">Success!</h2>
                 <p class="text-gray-300 mb-6">Your configuration is correct. The system is ready to be packaged. Click the button below to generate and download a `.zip` file containing your customized applications.</p>
-                <button id="downloadBtn" onclick="generateZip()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg text-lg">Generate & Download .zip Package</button>
+                <button type="button" id="downloadBtn" onclick="generateZip()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg text-lg">Generate & Download .zip Package</button>
                 <div id="zipStatus" class="text-center text-gray-400 mt-4"></div>
             </div>
         </div>
@@ -333,7 +333,7 @@
             let workerApp = templates['worker_app_template.txt'];
             workerApp = workerApp.replace(/%%FIRST_ALERT_MINUTES%%/g, firstAlert);
             workerApp = workerApp.replace(/%%CHECKIN_ENABLED%%/g, checkin);
-            workerApp = workerApp.replace(/https://i\.postimg\.cc\/dVmVg3Pn\/favicon-logo-for-LWSApp\.png/g, logoUrl);
+            workerApp = workerApp.replace(/https:\/\/i\.postimg\.cc\/dVmVg3Pn\/favicon-logo-for-LWSApp\.png/g, logoUrl);
             workerApp = workerApp.replace(/%%GOOGLE_SHEET_URL%%/g, url);
             
             const workerFolder = zip.folder('LoneWorkerApp');
@@ -354,7 +354,7 @@
             // Make dashboard page active
             monitorApp = monitorApp.replace('<div id="dashboardPage" class="h-full flex-col hidden">', '<div id="dashboardPage" class="h-full flex flex-col">');
             // Remove the reset button
-            monitorApp = monitorApp.replace(/<button id="resetUrlBtn".*?<\/svg><\/button>/s, '');
+            monitorApp = monitorApp.replace(/<button type="button" id="resetUrlBtn".*?<\/svg><\/button>/s, '');
             
             // Inject URL and Key
             const loginLogic = `
