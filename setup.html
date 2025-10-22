@@ -366,12 +366,12 @@
             statusEl.innerText = 'Processing Monitor App...';
             let monitorApp = templates['monitor_app_template.txt'];
             
-            // Remove setup page
-            monitorApp = monitorApp.replace(/<div id="setupPage".*?<\/div>/s, '');
+            // Remove setup page using robust comment placeholders
+            monitorApp = monitorApp.replace(/.*?/s, '');
+            // Remove the reset button using robust comment placeholders
+            monitorApp = monitorApp.replace(/.*?/s, '');
             // Make dashboard page active
             monitorApp = monitorApp.replace('<div id="dashboardPage" class="h-full flex-col hidden">', '<div id="dashboardPage" class="h-full flex flex-col">');
-            // Remove the reset button
-            monitorApp = monitorApp.replace(/<button type="button" id="resetUrlBtn".*?<\/svg><\/button>/s, '');
             
             // Inject URL and Key
             const loginLogic = `
@@ -386,8 +386,8 @@
     if (pollingInterval) clearInterval(pollingInterval);
     pollingInterval = setInterval(fetchData, 15000);
             `;
-            // This regex finds the entire original init logic and replaces it
-            monitorApp = monitorApp.replace(/sheetUrl = localStorage\.getItem\('lwsMonitorUrl'\);.*?if \(sheetUrl && secretKey\) \{.*?\} else \{.*?navigate\('setup'\);.*?\}/s, loginLogic);
+            // Replace login logic block using robust comment placeholders
+            monitorApp = monitorApp.replace(/.*?/s, loginLogic);
             
             const monitorFolder = zip.folder('MonitoringDashboardApp');
             monitorFolder.file('index.html', monitorApp);
@@ -405,7 +405,7 @@
             // We also need to update the Admin Guide to reflect the new workflow
             let adminGuide = templates['Administrator Setup Guide.md'];
             adminGuide = adminGuide.replace(/find the line `var SECRET_KEY = "YOUR_SECRET_KEY_HERE";` and change it to a **strong, private password**./, "Enter your desired **Secret Key** in the box provided. The tool will inject this for you.");
-            adminGuide = adminGuide.replace(/Paste the **Web app URL** .* into the first box\.\n\* Enter the **Secret Key** .* into the second box\./, "Paste the **Web app URL** (from the previous step) into the first box.\n* The **SecretKey** field will be auto-filled for you.");
+            adminGuide = adminGuide.replace(/Paste the **Web app URL** .* into the first box\.\n\* Enter the **Secret Key** .* into the second box\./, "Paste the **Web app URL** (from the previous step) into the first box.\n* The **Secret Key** field will be auto-filled for you.");
 
             docFolder.file('Administrator Setup Guide.md', adminGuide);
             docFolder.file('Installer Creation Guide.md', templates['Installer Creation Guide.md']);
