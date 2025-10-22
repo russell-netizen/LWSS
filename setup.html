@@ -125,7 +125,7 @@
                     </div>
                     <div>
                         <label for="firstAlert" class="block text-sm font-medium text-gray-300">First Overdue Alert (Minutes)</label>
-                        <input type="number" id="firstAlert" value="15" class="mt-1 block w-48 bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <input type="number" id="firstAlert" value="15" min="1" class="mt-1 block w-48 bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                         <p class="text-xs text-gray-400 mt-1">Time a worker is overdue before the Worker App sends an 'ALERT SENT' status (and the backend sends `EMAIL_1_SENT`). 15 minutes is recommended.</p>
                     </div>
                     <div class="flex items-center">
@@ -181,48 +181,68 @@
             );
             await Promise.all(fetches);
             console.log('All templates loaded.');
-            document.getElementById('scriptPreview').textContent = templates['apps_script_template.txt'];
+            // Make sure script preview exists before setting text
+            const scriptPreviewEl = document.getElementById('scriptPreview');
+            if (scriptPreviewEl) {
+                scriptPreviewEl.textContent = templates['apps_script_template.txt'];
+            }
         } catch (error) {
             console.error(error);
             alert(`Error: Could not load template files from the './templates/' folder. Make sure this setup tool is hosted on a web server (like GitHub Pages) and the templates folder is in the same directory.`);
+            // Disable further interaction if templates fail to load
+            document.querySelectorAll('button').forEach(btn => btn.disabled = true);
         }
     };
 
     // --- Navigation ---
     function showStep(step) {
+        // Ensure elements exist before trying to modify them
         document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
-        document.getElementById(`step${step}`).classList.add('active');
+        const stepEl = document.getElementById(`step${step}`);
+        if (stepEl) stepEl.classList.add('active');
+        
         document.querySelectorAll('.step-nav button').forEach(el => el.classList.remove('current'));
-        document.getElementById(`nav${step}`).classList.add('current');
+        const navEl = document.getElementById(`nav${step}`);
+        if (navEl) navEl.classList.add('current');
+        
         currentStep = step;
 
         // Auto-fill Step 4's key field when we arrive
         if (step === 4) {
-            document.getElementById('secretKey').value = config.secretKey;
+             const secretKeyEl = document.getElementById('secretKey');
+             if (secretKeyEl) secretKeyEl.value = config.secretKey;
         }
     }
 
     function nextStep() {
         // When leaving Step 3, save the key
         if (currentStep === 3) {
-            const key = document.getElementById('secretKeyStep3').value;
-            if (!key) {
+            const keyInput = document.getElementById('secretKeyStep3');
+            if (!keyInput || !keyInput.value) {
                 alert("Please enter a Secret Key before proceeding.");
                 return; // GUARD CLAUSE
             }
-            config.secretKey = key;
+            config.secretKey = keyInput.value;
         }
 
         if (currentStep < 5) {
-            document.getElementById(`nav${currentStep + 1}`).disabled = false;
-            document.getElementById(`nav${currentStep + 1}`).classList.remove('text-gray-400');
+            const nextNav = document.getElementById(`nav${currentStep + 1}`);
+            if (nextNav) {
+                nextNav.disabled = false;
+                nextNav.classList.remove('text-gray-400');
+            }
             showStep(currentStep + 1);
         }
     }
 
     // --- Utilities ---
     function copyToClipboard(elementId, button) {
-        const text = document.getElementById(elementId).innerText;
+        const textEl = document.getElementById(elementId);
+        if (!textEl || !navigator.clipboard) {
+            alert('Clipboard API not available.');
+            return;
+        }
+        const text = textEl.innerText;
         navigator.clipboard.writeText(text).then(() => {
             button.innerText = 'Copied!';
             button.classList.add('copied');
@@ -232,11 +252,13 @@
             }, 2000);
         }).catch(err => {
             alert('Failed to copy.');
+            console.error('Clipboard copy failed:', err);
         });
     }
 
     function copyInjectedScript(button) {
-        const key = document.getElementById('secretKeyStep3').value;
+        const keyInput = document.getElementById('secretKeyStep3');
+        const key = keyInput ? keyInput.value : '';
         if (!key) {
             alert("Please enter a Secret Key in the box above first.");
             return;
@@ -250,6 +272,10 @@
         
         const injectedScript = template.replace('YOUR_SECRET_KEY_HERE', key);
 
+        if (!navigator.clipboard) {
+            alert('Clipboard API not available.');
+            return;
+        }
         navigator.clipboard.writeText(injectedScript).then(() => {
             button.innerText = 'Copied!';
             button.classList.add('copied');
@@ -259,10 +285,10 @@
             }, 2000);
         }).catch(err => {
             alert('Failed to copy.');
+             console.error('Clipboard copy failed:', err);
         });
     }
 
-    // --- NEW VALIDATION FUNCTION ---
     function validateUrl(input) {
         const urlPattern = /^https:\/\/script\.google\.com\/macros\/s\/.*\/exec$/;
         if (input.value && !urlPattern.test(input.value)) {
@@ -274,9 +300,14 @@
 
     // --- Core Logic ---
     function testAndProceed() {
-        const url = document.getElementById('scriptUrl').value;
-        const key = document.getElementById('secretKey').value; // Reads from the auto-filled field
+        const urlInput = document.getElementById('scriptUrl');
+        const keyInput = document.getElementById('secretKey'); // Reads from the auto-filled field
         const statusEl = document.getElementById('testStatus');
+        
+        if (!urlInput || !keyInput || !statusEl) return; // Basic check
+
+        const url = urlInput.value;
+        const key = keyInput.value; 
 
         if (!url || !key) {
             statusEl.innerText = 'Please fill in both the URL and Secret Key.';
@@ -284,8 +315,8 @@
         }
 
         // Run validation one last time before testing
-        validateUrl(document.getElementById('scriptUrl'));
-        if (document.getElementById('scriptUrl').style.borderColor) {
+        validateUrl(urlInput);
+        if (urlInput.style.borderColor) {
              statusEl.innerText = 'The URL format appears to be incorrect.';
              return;
         }
@@ -299,7 +330,7 @@
         window[callbackName] = function(data) {
             clearTimeout(timer);
             delete window[callbackName];
-            document.body.removeChild(script);
+             if(document.body.contains(script)) document.body.removeChild(script); // Clean up script tag
             if (data.status === 'error' && data.message.includes('Access Denied')) {
                 statusEl.innerText = 'Error: Access Denied. Your Secret Key is incorrect.';
             } else if (Array.isArray(data)) {
@@ -314,14 +345,16 @@
         script.onerror = () => {
             clearTimeout(timer);
             delete window[callbackName];
-            if(document.body.contains(script)) document.body.removeChild(script);
+            if(document.body.contains(script)) document.body.removeChild(script); // Clean up script tag
             statusEl.innerText = 'Error: Could not connect. Check the Web App URL and CORS settings.';
         };
         
         timer = setTimeout(() => {
             // Manually trigger error if timeout
             if (window[callbackName]) {
-                window[callbackName]({ status: 'error', message: 'Timeout' });
+                 delete window[callbackName];
+                 if(document.body.contains(script)) document.body.removeChild(script); // Clean up script tag
+                 statusEl.innerText = 'Error: Connection timed out. Check URL or script deployment.';
             }
         }, 10000); // 10 second timeout
 
@@ -331,49 +364,58 @@
     async function generateZip() {
         const statusEl = document.getElementById('zipStatus');
         const downloadBtn = document.getElementById('downloadBtn');
+        if (!statusEl || !downloadBtn) return; // Basic check
+
         statusEl.innerText = 'Gathering files...';
         downloadBtn.disabled = true;
-        downloadBtn.classList.add('bg-gray-500');
+        downloadBtn.classList.add('bg-gray-500', 'cursor-not-allowed');
+        downloadBtn.classList.remove('hover:bg-blue-700');
+
 
         try {
+            // Check if JSZip is loaded
+            if (typeof JSZip === 'undefined') {
+                 throw new Error("JSZip library not loaded.");
+            }
             const zip = new JSZip();
 
             // Get form values
             const url = document.getElementById('scriptUrl').value;
-            const key = document.getElementById('secretKey').value; // This is the key from Step 4, which was auto-filled from Step 3
+            const key = document.getElementById('secretKey').value; 
             const firstAlert = document.getElementById('firstAlert').value;
             const checkin = document.getElementById('enableCheckin').checked;
-            const logoUrl = document.getElementById('logoUrl').value || 'https://i.postimg.cc/dVmVg3Pn/favicon-logo-for-LWSApp.png'; // Default logo
+            const logoUrl = document.getElementById('logoUrl').value || 'https://i.postimg.cc/dVmVg3Pn/favicon-logo-for-LWSApp.png'; 
 
             // --- 1. Process Worker App ---
             statusEl.innerText = 'Processing Worker App...';
             let workerApp = templates['worker_app_template.txt'];
+            if (!workerApp) throw new Error("Worker template not loaded");
             workerApp = workerApp.replace(/%%FIRST_ALERT_MINUTES%%/g, firstAlert);
             workerApp = workerApp.replace(/%%CHECKIN_ENABLED%%/g, checkin);
             workerApp = workerApp.replace(/https:\/\/i\.postimg\.cc\/dVmVg3Pn\/favicon-logo-for-LWSApp\.png/g, logoUrl);
             workerApp = workerApp.replace(/%%GOOGLE_SHEET_URL%%/g, url);
             
             const workerFolder = zip.folder('LoneWorkerApp');
+            if (!workerFolder) throw new Error("Could not create worker folder in zip");
             workerFolder.file('index.html', workerApp);
-            workerFolder.file('sw.js', templates['sw.js']);
+            if (templates['sw.js']) workerFolder.file('sw.js', templates['sw.js']);
 
             // --- 2. Process Manifest ---
             let manifest = templates['manifest.json'];
+            if (!manifest) throw new Error("Manifest template not loaded");
             manifest = manifest.replace(/https:\/\/i\.postimg\.cc\/dVmVg3Pn\/favicon-logo-for-LWSApp\.png/g, logoUrl);
             workerFolder.file('manifest.json', manifest);
 
             // --- 3. Process Monitor App ---
             statusEl.innerText = 'Processing Monitor App...';
             let monitorApp = templates['monitor_app_template.txt'];
+            if (!monitorApp) throw new Error("Monitor template not loaded");
             
-            // Remove setup page using robust comment placeholders
+            // Use robust comment placeholders
             monitorApp = monitorApp.replace(/.*?/s, '');
-            // Remove the reset button using robust comment placeholders
             monitorApp = monitorApp.replace(/.*?/s, '');
-            // Make dashboard page active
             monitorApp = monitorApp.replace('<div id="dashboardPage" class="h-full flex-col hidden">', '<div id="dashboardPage" class="h-full flex flex-col">');
             
-            // Inject URL and Key
             const loginLogic = `
     sheetUrl = "${url}";
     secretKey = "${key}";
@@ -386,30 +428,36 @@
     if (pollingInterval) clearInterval(pollingInterval);
     pollingInterval = setInterval(fetchData, 15000);
             `;
-            // Replace login logic block using robust comment placeholders
+            // Use robust comment placeholders for replacement
             monitorApp = monitorApp.replace(/.*?/s, loginLogic);
             
             const monitorFolder = zip.folder('MonitoringDashboardApp');
+             if (!monitorFolder) throw new Error("Could not create monitor folder in zip");
             monitorFolder.file('index.html', monitorApp);
 
             // --- 4. Process Apps Script ---
             statusEl.innerText = 'Processing Apps Script file...';
             let appsScript = templates['apps_script_template.txt'];
+             if (!appsScript) throw new Error("Apps Script template not loaded");
             appsScript = appsScript.replace('YOUR_SECRET_KEY_HERE', key);
             zip.file('01-PASTE_THIS_INTO_APPS_SCRIPT.txt', appsScript);
 
             // --- 5. Add Documentation ---
             statusEl.innerText = 'Adding documentation...';
             const docFolder = zip.folder('Documentation');
+            if (!docFolder) throw new Error("Could not create documentation folder in zip");
             
-            // We also need to update the Admin Guide to reflect the new workflow
             let adminGuide = templates['Administrator Setup Guide.md'];
-            adminGuide = adminGuide.replace(/find the line `var SECRET_KEY = "YOUR_SECRET_KEY_HERE";` and change it to a **strong, private password**./, "Enter your desired **Secret Key** in the box provided. The tool will inject this for you.");
-            adminGuide = adminGuide.replace(/Paste the **Web app URL** .* into the first box\.\n\* Enter the **Secret Key** .* into the second box\./, "Paste the **Web app URL** (from the previous step) into the first box.\n* The **Secret Key** field will be auto-filled for you.");
+            if (!adminGuide) throw new Error("Admin Guide template not loaded");
+
+            // --- CORRECTED REGEX with escaped characters ---
+            adminGuide = adminGuide.replace(/find the line `var SECRET_KEY = "YOUR_SECRET_KEY_HERE";` and change it to a \*\*strong, private password\*\*\./, "Enter your desired **Secret Key** in the box provided. The tool will inject this for you.");
+            adminGuide = adminGuide.replace(/Paste the \*\*Web app URL\*\* .* into the first box\.\\n\* Enter the \*\*Secret Key\*\* .* into the second box\./, "Paste the **Web app URL** (from the previous step) into the first box.\n* The **Secret Key** field will be auto-filled for you.");
+            // --- END CORRECTION ---
 
             docFolder.file('Administrator Setup Guide.md', adminGuide);
-            docFolder.file('Installer Creation Guide.md', templates['Installer Creation Guide.md']);
-            docFolder.file('Promotional Blurb.md', templates['Promotional Blurb.md']);
+            if (templates['Installer Creation Guide.md']) docFolder.file('Installer Creation Guide.md', templates['Installer Creation Guide.md']);
+            if (templates['Promotional Blurb.md']) docFolder.file('Promotional Blurb.md', templates['Promotional Blurb.md']);
 
             // --- 6. Generate and Download ---
             statusEl.innerText = 'Generating .zip file...';
@@ -421,16 +469,20 @@
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
+            URL.revokeObjectURL(a.href); // Clean up blob URL
 
             statusEl.innerText = 'Download complete!';
-            downloadBtn.disabled = false;
-            downloadBtn.classList.remove('bg-gray-500');
+            
 
         } catch (error) {
-            console.error(error);
-            statusEl.innerText = 'Error generating zip file. See console for details.';
-            downloadBtn.disabled = false;
-            downloadBtn.classList.remove('bg-gray-500');
+            console.error("Error during zip generation:", error);
+            statusEl.innerText = `Error generating zip file: ${error.message}. See console for details.`;
+           
+        } finally {
+             // Ensure button is always re-enabled
+             downloadBtn.disabled = false;
+             downloadBtn.classList.remove('bg-gray-500', 'cursor-not-allowed');
+             downloadBtn.classList.add('hover:bg-blue-700');
         }
     }
 </script>
