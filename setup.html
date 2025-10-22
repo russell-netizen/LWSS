@@ -76,9 +76,13 @@
                 <ol class="list-decimal list-inside text-gray-300 space-y-3 mb-6">
                     <li>In your Google Sheet, click `Extensions` > `Apps Script`.</li>
                     <li>Delete any code in the `Code.gs` file.</li>
-                    <li>Enter your desired **Secret Key (password)** in the box below. This will be injected into the script for you.</li>
-                    <li>Click the "Copy Script" button. The complete, customized code will be copied to your clipboard.</li>
-                    <li>Paste the code into the empty `Code.gs` editor.</li>
+                    <li>**Create a Secret Key:** Enter a strong, private password in the box below. This will be automatically injected into the script code for you.</li>
+                    
+                    <div class="mb-4 ml-6"> <label for="secretKeyStep3" class="block text-sm font-medium text-gray-300">Create a Secret Key</label>
+                        <input type="password" id="secretKeyStep3" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Enter a strong, private password">
+                    </div>
+                    <li>Click the "Copy Script" button below. The complete, customized code (with your key included) will be copied to your clipboard.</li>
+                    <li>Paste the copied code into the empty `Code.gs` editor.</li>
                     <li>Click the **Deploy** button (top right), select **New deployment**.
                         <ul class="list-disc list-inside ml-6 mt-2 p-2 bg-gray-700 rounded-md">
                             <li>Click the Gear icon for "Select type" and choose **Web app**.</li>
@@ -97,12 +101,6 @@
                         </ul>
                     </li>
                 </ol>
-
-                <div class="mb-4">
-                    <label for="secretKeyStep3" class="block text-sm font-medium text-gray-300">Enter Your Secret Key</label>
-                    <input type="password" id="secretKeyStep3" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Enter a strong, private password">
-                </div>
-
                 <div class="relative bg-gray-900 rounded-lg mb-4 h-64 overflow-y-auto">
                     <button type="button" id="copyScriptBtn" onclick="copyInjectedScript(this)" class="copy-btn z-10">Copy Script</button>
                     <pre id="scriptPreview" class="p-4 text-xs text-gray-400">Loading script preview...</pre>
@@ -452,7 +450,7 @@
 
             // --- CORRECTED REGEX with escaped characters ---
             adminGuide = adminGuide.replace(/find the line `var SECRET_KEY = "YOUR_SECRET_KEY_HERE";` and change it to a \*\*strong, private password\*\*\./, "Enter your desired **Secret Key** in the box provided. The tool will inject this for you.");
-            adminGuide = adminGuide.replace(/Paste the \*\*Web app URL\*\* .* into the first box\.\\n\* Enter the \*\*Secret Key\*\* .* into the second box\./, "Paste the **Web app URL** (from the previous step) into the first box.\n* The **Secret Key** field will be auto-filled for you.");
+            adminGuide = adminGuide.replace(/Paste the \*\*Web app URL\*\* .*? into the first box\.\s*\* Enter the \*\*Secret Key\*\* .*? into the second box\./s, "Paste the **Web app URL** (from the previous step) into the first box.\n* The **Secret Key** field will be auto-filled for you.");
             // --- END CORRECTION ---
 
             docFolder.file('Administrator Setup Guide.md', adminGuide);
