@@ -1,0 +1,230 @@
+// ##### --------------------------------------------------- #####
+// ##### Lone Worker Safety System - Google Apps Script Backend #####
+// ##### --------------------------------------------------- #####
+
+// --- CONFIGURATION ---
+// IMPORTANT: Change this to a secret password of your choice.
+var SECRET_KEY = "YOUR_SECRET_KEY_HERE";
+
+// --- SPREADSHEET SETUP ---
+var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+
+// --- WEB APP ENDPOINTS ---
+/**
+ * Handles GET requests. Used by the Monitoring Dashboard to fetch data.
+ * Responds with JSONP for cross-domain access.
+ */
+function doGet(e) {
+  var token = e.parameter.token;
+  if (token !== SECRET_KEY) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: "error", message: "Access Denied" }))
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+
+  var data = sheet.getDataRange().getValues();
+  var headers = data.shift();
+  var json = data.map(function(row) {
+    var obj = {};
+    headers.forEach(function(header, i) {
+      obj[header] = row[i];
+    });
+    return obj;
+  });
+
+  var callback = e.parameter.callback;
+  var jsonpResponse = callback + '(' + JSON.stringify(json) + ')';
+
+  return ContentService
+    .createTextOutput(jsonpResponse)
+    .setMimeType(ContentService.MimeType.JAVASCRIPT);
+}
+
+/**
+ * Handles POST requests. Used by the Worker App AND Monitor App to submit data.
+ */
+function doPost(e) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000); // Wait up to 30 seconds for lock
+
+  try {
+    var data = e.parameter;
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var arrivalTime = data["Arrival Time"];
+    var workerName = data["Worker Name"];
+
+    // Find existing row or create a new one
+    var dataRange = sheet.getDataRange().getValues();
+    var rowIndex = -1;
+    for (var i = 1; i < dataRange.length; i++) {
+      var rowArrivalTime = new Date(dataRange[i][headers.indexOf("Arrival Time")]).toISOString();
+      if (dataRange[i][headers.indexOf("Worker Name")] === workerName && rowArrivalTime === arrivalTime) {
+        rowIndex = i + 1;
+        break;
+      }
+    }
+
+    if (rowIndex !== -1) {
+      // Update existing row
+      headers.forEach(function(header) {
+        if (data[header] !== undefined) {
+          var colIndex = headers.indexOf(header) + 1;
+          sheet.getRange(rowIndex, colIndex).setValue(data[header]);
+        }
+      });
+    } else {
+      // Append new row (This part is mainly for the worker app's first "ON SITE" post)
+      var newRow = headers.map(function(header) {
+        return data[header] || "";
+      });
+      sheet.appendRow(newRow);
+    }
+
+    // Immediate alert triggers (from worker app)
+    if (['EMERGENCY - PANIC BUTTON', 'DURESS_CODE_ACTIVATED', 'MISSED_CHECKIN'].indexOf(data['Alarm Status']) > -1) {
+      sendAlertEmail(data, data['Alarm Status']);
+    }
+
+  } catch (err) {
+    Logger.log('Error in doPost: ' + err.toString());
+  } finally {
+    lock.releaseLock();
+  }
+
+  return ContentService.createTextOutput("Success");
+}
+
+// --- AUTOMATED TRIGGER FUNCTION ---
+/**
+ * This function should be run on a time-based trigger (e.g., every 5 minutes).
+ * It checks for overdue workers and sends escalating email alerts.
+ */
+function checkOverdueWorkers() {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    var dataRange = sheet.getDataRange();
+    var data = dataRange.getValues();
+    var headers = data[0];
+    var now = new Date();
+
+    // Define all "resolved" statuses
+    var resolvedStatuses = ['DEPARTED', 'SAFE - MANUALLY CLEARED', 'MONITOR_CLEARED_ALERT'];
+
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      var worker = {};
+      headers.forEach(function(header, j) {
+        worker[header] = row[j];
+      });
+
+      var status = worker['Alarm Status'];
+      var anticipatedDeparture = new Date(worker['Anticipated Departure Time']);
+
+      // Check if status is NOT in the resolved list and is overdue
+      if (resolvedStatuses.indexOf(status) === -1 && now > anticipatedDeparture) {
+        var overdueMinutes = (now.getTime() - anticipatedDeparture.getTime()) / 60000;
+        var alertToSend = null;
+
+        if (overdueMinutes >= 60 && status !== 'ESCALATION_SENT') {
+          alertToSend = 'ESCALATION_SENT';
+        } else if (overdueMinutes >= 45 && status !== 'EMAIL_3_SENT' && status !== 'ESCALATION_SENT') {
+          alertToSend = 'EMAIL_3_SENT';
+        } else if (overdueMinutes >= 30 && status !== 'EMAIL_2_SENT' && status !== 'EMAIL_3_SENT' && status !== 'ESCALATION_SENT') {
+          alertToSend = 'EMAIL_2_SENT';
+        } else if (overdueMinutes >= 15 && status !== 'EMAIL_1_SENT' && status !== 'EMAIL_2_SENT' && status !== 'EMAIL_3_SENT' && status !== 'ESCALATION_SENT') {
+          alertToSend = 'EMAIL_1_SENT';
+        }
+
+        if (alertToSend) {
+          sheet.getRange(i + 1, headers.indexOf('Alarm Status') + 1).setValue(alertToSend);
+          sendAlertEmail(worker, alertToSend);
+        }
+      }
+    }
+  } catch (err) {
+    Logger.log('Error in checkOverdueWorkers: ' + err.toString());
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// --- EMAIL HELPER FUNCTION ---
+/**
+ * Sends a formatted alert email.
+ */
+function sendAlertEmail(workerData, alertType) {
+  var recipient = alertType === 'ESCALATION_SENT' ? workerData['Escalation Contact Email'] : workerData['Emergency Contact Email'];
+  var subject = '';
+  var body = '';
+
+  var locationName = workerData['Location Name'] || 'Not specified';
+  var locationAddress = workerData['Location Address'] || 'Not specified';
+  var workerName = workerData['Worker Name'];
+  var workerPhone = workerData['Worker Phone Number'];
+  var anticipatedDeparture = new Date(workerData['Anticipated Departure Time']).toLocaleString();
+
+  var locationLink = 'http://maps.google.com/?q=' + encodeURIComponent(locationAddress);
+  if (workerData['Last Known GPS']) {
+    locationLink = 'http://maps.google.com/?q=' + workerData['Last Known GPS'];
+  }
+
+  switch(alertType) {
+    case 'EMERGENCY - PANIC BUTTON':
+      subject = 'URGENT PANIC ALERT for ' + workerName;
+      body = '<p><strong>A PANIC ALERT has been triggered by ' + workerName + '.</strong></p> <p>This is a high-priority alert indicating an emergency situation.</p>';
+      break;
+    case 'DURESS_CODE_ACTIVATED':
+      subject = 'URGENT DURESS ALERT for ' + workerName;
+      body = '<p><strong>A SILENT DURESS ALARM has been triggered by ' + workerName + '.</strong></p> <p>The worker has entered their Duress PIN, suggesting they may be under threat and unable to call for help directly.</p>';
+      break;
+    case 'MISSED_CHECKIN':
+      subject = 'MISSED CHECK-IN ALERT for ' + workerName;
+      body = '<p><strong>' + workerName + ' has missed a scheduled "Are you OK?" check-in.</strong></p>';
+      break;
+    case 'ESCALATION_SENT':
+      subject = 'ESCALATION ALERT: ' + workerName + ' is 60+ mins Overdue';
+      body = '<p>This is an escalation alert. ' + workerName + ' is now more than 60 minutes overdue and has not responded to previous alerts.</p>';
+      break;
+    case 'EMAIL_1_SENT':
+    case 'EMAIL_2_SENT':
+    case 'EMAIL_3_SENT':
+      var minutesOverdue = 15;
+      if (alertType === 'EMAIL_2_SENT') minutesOverdue = 30;
+      if (alertType === 'EMAIL_3_SENT') minutesOverdue = 45;
+      subject = 'Overdue Alert: ' + workerName + ' is ' + minutesOverdue + '+ mins Overdue';
+      body = '<p>' + workerName + ' is now more than ' + minutesOverdue + ' minutes overdue.</p>';
+      break;
+    default: 
+      subject = 'LWS Alert for ' + workerName;
+      body = '<p>An automated alert (' + alertType + ') has been triggered for ' + workerName + '.</p>';
+      break;
+  }
+
+  var fullBody = '<html><body style="font-family: sans-serif; line-height: 1.6;">' + body + 
+                   '<hr style="margin: 20px 0;"><h3>Visit Details:</h3><ul>' + 
+                   '<li><strong>Worker:</strong> ' + workerName + '</li>' + 
+                   '<li><strong>Phone:</strong> ' + workerPhone + '</li>' +
+                   '<li><strong>Location:</strong> ' + locationName + '</li>' +
+                   '<li><strong>Address:</strong> ' + locationAddress + '</li>' +
+                   '<li><strong>Anticipated Departure:</strong> ' + anticipatedDeparture + '</li>' +
+                   '</ul><p style="font-size: 1.2em; font-weight: bold;"><a href="' + locationLink + '">View Location on Map</a></p>' +
+                   '<p style="font-size: 0.8em; color: #888;">This is an automated message from the Lone Worker Safety System.</p></body></html>';
+
+  if (recipient) {
+    try {
+      MailApp.sendEmail({
+        to: recipient,
+        subject: subject,
+        htmlBody: fullBody,
+        name: "LWS System Alert"
+      });
+      Logger.log('Email sent to ' + recipient + ' for alert type ' + alertType);
+    } catch (e) {
+      Logger.log('Failed to send email to ' + recipient + ': ' + e.toString());
+    }
+  } else {
+    Logger.log('Cannot send email: No recipient found for alert type ' + alertType);
+  }
+}
