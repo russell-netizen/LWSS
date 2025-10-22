@@ -432,12 +432,12 @@
     }
 
     function init() {
-        // setupPage = document.getElementById('setupPage'); // Removed
+        setupPage = document.getElementById('setupPage');
         dashboardPage = document.getElementById('dashboardPage');
-        // googleSheetUrlInput = document.getElementById('googleSheetUrl'); // Removed
-        // secretKeyInput = document.getElementById('secretKey'); // Removed
-        // saveUrlBtn = document.getElementById('saveUrlBtn'); // Removed
-        // resetUrlBtn = document.getElementById('resetUrlBtn'); // Removed
+        googleSheetUrlInput = document.getElementById('googleSheetUrl');
+        secretKeyInput = document.getElementById('secretKey');
+        saveUrlBtn = document.getElementById('saveUrlBtn');
+        resetUrlBtn = document.getElementById('resetUrlBtn');
         workerList = document.getElementById('workerList');
         statusIndicator = document.getElementById('statusIndicator');
         lastUpdatedEl = document.getElementById('lastUpdated');
@@ -456,10 +456,8 @@
         resolveConfirmInput = document.getElementById('resolveConfirmInput');
         cancelResolveBtn = document.getElementById('cancelResolveBtn');
         confirmResolveBtn = document.getElementById('confirmResolveBtn');
-        
-        // --- MODIFIED LOGIN LOGIC ---
-        // The setup tool will hardcode the URL and Key here
-        // The localStorage and navigate('setup') logic is removed.
+
+        // --- CORRECTED MONITOR_LOGIN_LOGIC_START ---
         sheetUrl = localStorage.getItem('lwsMonitorUrl');
         secretKey = localStorage.getItem('lwsMonitorKey');
         
@@ -479,4 +477,5 @@
     window.addEventListener('load', init);
 </script>
 </body>
+
 </html>
