@@ -462,8 +462,11 @@
         secretKey = localStorage.getItem('lwsMonitorKey');
         
         initEventListeners();
-        
+
         if (sheetUrl && secretKey) {
+            // These lines might be present if using the original template directly
+            if (googleSheetUrlInput) googleSheetUrlInput.value = sheetUrl;
+            if (secretKeyInput) secretKeyInput.value = secretKey;
             navigate('dashboard');
             fetchData();
             if (pollingInterval) clearInterval(pollingInterval);
@@ -471,11 +474,10 @@
         } else {
             navigate('setup');
         }
-        // --- END MODIFIED LOGIC ---
+        // --- CORRECTED MONITOR_LOGIN_LOGIC_END ---
     }
-    
+
     window.addEventListener('load', init);
 </script>
 </body>
-
 </html>
