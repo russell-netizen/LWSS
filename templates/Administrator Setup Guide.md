@@ -36,8 +36,8 @@ Follow the steps in the setup tool you just launched.
 * Click the link to open a new Google Sheet (`sheets.new`).
 * Click the **"Copy Headers"** button in the wizard.
 * In your sheet, click **once** on cell **A1**.
-* Paste the copied text.
-* With A1 still selected, go to **Data > Split text to columns**. Choose **Comma** if prompted. The headers should now be split across row 1.
+* **Paste** the copied text (Ctrl+V or Cmd+V). The headers should **automatically** fill row 1 (A1 to R1).
+* (Optional but Recommended) Freeze the header row: Go to **View > Freeze > 1 row**.
 
 ### **Step 3: Deploy Script**
 * This is the most important part.
