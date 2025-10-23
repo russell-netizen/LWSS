@@ -248,7 +248,6 @@
     }
 
     // --- Utilities ---
-    // --- UPDATED copyHeadersToClipboard ---
     function copyHeadersToClipboard(button) {
         const textEl = document.getElementById('headersPlainText'); // Get hidden textarea
         if (!textEl || !navigator.clipboard) {
@@ -268,8 +267,6 @@
             console.error('Clipboard copy failed:', err);
         });
     }
-    // --- END UPDATED FUNCTION ---
-
 
     function copyInjectedScript(button) {
         const keyInput = document.getElementById('secretKeyStep3');
@@ -426,25 +423,16 @@
             let monitorApp = templates['monitor_app_template.txt'];
             if (!monitorApp) throw new Error("Monitor template not loaded");
             
-            // Use robust comment placeholders
+            // Remove setup page and reset button using comment placeholders
             monitorApp = monitorApp.replace(/.*?/s, '');
             monitorApp = monitorApp.replace(/.*?/s, '');
+            // Make dashboard page active
             monitorApp = monitorApp.replace('<div id="dashboardPage" class="h-full flex-col hidden">', '<div id="dashboardPage" class="h-full flex flex-col">');
             
-            const loginLogic = `
-    sheetUrl = "${url}";
-    secretKey = "${key}";
-    
-    initEventListeners();
-    
-    // This is the modified init() function logic
-    navigate('dashboard');
-    fetchData();
-    if (pollingInterval) clearInterval(pollingInterval);
-    pollingInterval = setInterval(fetchData, 15000);
-            `;
-            // Use robust comment placeholders for replacement
-            monitorApp = monitorApp.replace(/.*?/s, loginLogic);
+            // === NEW REPLACEMENT LOGIC using simple placeholders ===
+            monitorApp = monitorApp.replace(/"%%SHEET_URL%%"/g, `"${url}"`); // Replace placeholder string
+            monitorApp = monitorApp.replace(/"%%SECRET_KEY%%"/g, `"${key}"`); // Replace placeholder string
+            // =======================================================
             
             const monitorFolder = zip.folder('MonitoringDashboardApp');
              if (!monitorFolder) throw new Error("Could not create monitor folder in zip");
@@ -465,11 +453,10 @@
             let adminGuide = templates['Administrator Setup Guide.md'];
             if (!adminGuide) throw new Error("Admin Guide template not loaded");
 
-            // --- CORRECTED REGEX with escaped characters ---
+            // Update admin guide text (using corrected regex)
             adminGuide = adminGuide.replace(/find the line `var SECRET_KEY = "YOUR_SECRET_KEY_HERE";` and change it to a \*\*strong, private password\*\*\./, "Enter your desired **Secret Key** in the box provided. The tool will inject this for you.");
             adminGuide = adminGuide.replace(/Paste the \*\*Web app URL\*\* .*? into the first box\.\s*\* Enter the \*\*Secret Key\*\* .*? into the second box\./s, "Paste the **Web app URL** (from the previous step) into the first box.\n* The **Secret Key** field will be auto-filled for you.");
-            // --- END CORRECTION ---
-
+            
             docFolder.file('Administrator Setup Guide.md', adminGuide);
             if (templates['Installer Creation Guide.md']) docFolder.file('Installer Creation Guide.md', templates['Installer Creation Guide.md']);
             if (templates['Promotional Blurb.md']) docFolder.file('Promotional Blurb.md', templates['Promotional Blurb.md']);
