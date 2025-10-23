@@ -170,14 +170,14 @@
 <script>
     let currentStep = 1;
     const templates = {};
+    let templatesLoaded = false; // Flag to track loading status
     const config = {
         secretKey: ""
     };
 
     // --- Template Fetching ---
     window.onload = async () => {
-        // --- FIXED FETCH URL CONSTRUCTION ---
-        const baseUrl = window.location.href; // Get the full URL of the setup.html page
+        const baseUrl = window.location.href; 
         const fetchTemplate = async (fileName) => {
             // Construct URL relative to the current page's location
             const templateUrl = new URL(`templates/${fileName}`, baseUrl).href; 
@@ -189,7 +189,6 @@
             const text = await response.text();
             templates[fileName] = text;
         };
-        // --- END FIXED FETCH URL ---
 
         try {
             const templateFiles = [
@@ -208,8 +207,9 @@
             }
             
             console.log('All templates loaded successfully.');
+            templatesLoaded = true; // Set flag
             
-            // Make sure script preview exists before setting text
+            // Populate script preview only if loaded
             const scriptPreviewEl = document.getElementById('scriptPreview');
             if (scriptPreviewEl && templates['apps_script_template.txt']) {
                 scriptPreviewEl.textContent = templates['apps_script_template.txt'];
@@ -232,10 +232,13 @@
             }
 
         } catch (error) {
-            console.error("Template Loading Error:", error); // Log the specific error
+            console.error("Template Loading Error:", error); 
+            templatesLoaded = false; // Ensure flag is false on error
             alert(`Error: Could not load template files. ${error.message}. Please ensure the 'templates' folder exists in the same directory as setup.html and contains all required files. Check the browser console (F12) for more details.`);
             // Disable further interaction if templates fail to load
             document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+            const statusEl = document.getElementById('zipStatus') || document.getElementById('testStatus');
+            if (statusEl) statusEl.innerText = "Error: Templates failed to load. Cannot proceed.";
         }
     };
 
@@ -263,6 +266,12 @@
     }
 
     function nextStep() {
+        // --- ADDED Check: Ensure templates are loaded before allowing navigation ---
+        if (!templatesLoaded) {
+             alert("Templates are still loading or failed to load. Please wait or check the console for errors.");
+             return;
+        }
+
         // When leaving Step 3, save the key
         if (currentStep === 3) {
             const keyInput = document.getElementById('secretKeyStep3');
@@ -308,6 +317,10 @@
     }
 
     function copyInjectedScript(button) {
+         if (!templatesLoaded) { // Check if templates are ready
+             alert('Templates are still loading or failed to load. Cannot copy script yet.');
+             return;
+         }
         const keyInput = document.getElementById('secretKeyStep3');
         const key = keyInput ? keyInput.value : '';
         if (!key) {
@@ -317,7 +330,7 @@
 
         const template = templates['apps_script_template.txt'];
         if (!template) {
-            alert('Error: Script template not loaded yet. Cannot copy.');
+            alert('Error: Script template not loaded. Cannot copy.');
             console.error('copyInjectedScript: apps_script_template not loaded.');
             return;
         }
@@ -354,6 +367,10 @@
 
     // --- Core Logic ---
     function testAndProceed() {
+         if (!templatesLoaded) { // Check if templates are ready
+             alert('Templates are still loading or failed to load. Cannot test connection yet.');
+             return;
+         }
         const urlInput = document.getElementById('scriptUrl');
         const keyInput = document.getElementById('secretKey'); // Reads from the auto-filled field
         const statusEl = document.getElementById('testStatus');
@@ -426,6 +443,13 @@
     }
 
     async function generateZip() {
+         // --- ADDED Check: Ensure templates are loaded before trying to zip ---
+         if (!templatesLoaded) {
+             alert('Templates are still loading or failed to load. Cannot generate zip file.');
+             return;
+         }
+         // --- END ADDED Check ---
+
         const statusEl = document.getElementById('zipStatus');
         const downloadBtn = document.getElementById('downloadBtn');
         if (!statusEl || !downloadBtn) {
