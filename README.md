@@ -1,6 +1,6 @@
 Project Specification: Lone Worker Safety System v2.1
 
-Version: 2.1 (Reflecting discussions up to Oct 23, 2025 - Check-in improvements & UI text)
+Version: 2.1 Oct 23, 2025
 
 1. Overview
 
