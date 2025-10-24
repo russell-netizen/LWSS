@@ -53,7 +53,6 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
 </div>
 <input id="durationSlider" type="range" min="0" max="14" value="0" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider-thumb">
 </div>
-<!-- === UPDATED BUTTON TEXT LOGIC IN SCRIPT === -->
 <button type="button" id="arrivedBtn" disabled class="long-press-btn relative w-full bg-gray-700 text-gray-400 font-bold py-4 px-4 rounded-lg text-xl transition-colors duration-300 flex-shrink-0">Select Location & Duration</button>
 </div>
 </div>
@@ -208,7 +207,9 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
     var CHECKIN_INTERVAL = %%CHECKIN_INTERVAL%%; 
     // --- END PLACEHOLDERS ---
 
-    let synth, checkinCountdownInterval; // Removed checkinIntervalId as it wasn't used correctly
+    let synth, checkinCountdownInterval;
+    let lastBatteryReportTime = 0; // --- ADDED for periodic battery reporting ---
+
     async function initAudio() { if (synth || (Tone.context && Tone.context.state === 'running')) return; try { await Tone.start(); synth = new Tone.Synth().toDestination(); console.log("Audio context started"); } catch (e) { console.error("Could not start audio context:", e); } }
     async function playSoundAndVibrate(action) {
         await initAudio();
@@ -276,13 +277,12 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
         state.locations.sort((a,b) => a.name.localeCompare(b.name)).forEach(loc => { const isSelected = loc.id === state.selectedLocationId; const locationEl = document.createElement('div'); locationEl.className = `selectable-item p-3 rounded-lg cursor-pointer border-2 transition-transform duration-100 ${isSelected ? 'bg-blue-900/50 border-blue-500' : 'bg-gray-800 border-transparent hover:border-gray-600'}`; locationEl.innerHTML = `<div class="flex justify-between items-center"><div><p class="font-semibold">${loc.name}</p><p class="text-sm text-gray-400">${loc.address}</p></div><button type="button" class="edit-location-btn p-2 rounded-full hover:bg-gray-700" data-id="${loc.id}"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button></div>`; locationList.appendChild(locationEl); });
     }
     function formatDuration(minutes) { if (minutes < 60) return `${minutes} mins`; const hours = Math.floor(minutes / 60); const mins = minutes % 60; return `${hours}h${mins > 0 ? ` ${mins}m` : ''}`; }
-    // --- UPDATED BUTTON TEXT ---
     function updateArrivedButtonState() { 
         if (state.selectedLocationId && state.visitDurationMinutes > 0) { 
             arrivedBtn.disabled = false; 
             arrivedBtn.classList.remove('bg-gray-700', 'text-gray-400'); 
             arrivedBtn.classList.add('bg-green-600', 'hover:bg-green-700', 'text-white'); 
-            arrivedBtn.textContent = 'Start (Hold 1.5s)'; // Changed text
+            arrivedBtn.textContent = 'Start (Hold 1.5s)'; 
         } else { 
             arrivedBtn.disabled = true; 
             arrivedBtn.classList.add('bg-gray-700', 'text-gray-400'); 
@@ -294,7 +294,6 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
             } 
         } 
     }
-    // --- END UPDATED BUTTON TEXT ---
     function sendToGoogleSheet(data) {
         if (!state.settings.googleSheetUrl || !state.settings.googleSheetUrl.startsWith('http')) {
             console.error("Google Sheet URL is not set.");
@@ -387,11 +386,17 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
     }
     async function executeStartVisit() {
         if (!navigator.onLine) { showAlert("No Network", "A network connection is required to start a visit."); return; }
+        lastBatteryReportTime = 0; // Reset battery report timer
+        let initialBatteryNote = "";
         if (navigator.getBattery) {
             try {
                 const battery = await navigator.getBattery();
-                if (battery.level < 0.20 && !battery.charging) {
-                    showAlert("Low Battery", `Battery is at ${Math.floor(battery.level * 100)}%. It may not last for the duration of this visit.`);
+                const level = Math.floor(battery.level * 100);
+                 initialBatteryNote = `Battery: ${level}%`; // Send initial level
+                 lastBatteryReportTime = Date.now();
+                if (level < 20 && !battery.charging) {
+                    showAlert("Low Battery", `Battery is at ${level}%. It may not last for the duration of this visit.`);
+                    initialBatteryNote += " (LOW)"; // Add low flag if needed
                 }
             } catch(e) { console.warn("Could not check battery:", e); }
         }
@@ -408,7 +413,7 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
             lastGpsAttemptTime: null,
             lastTravelGpsTime: null,
             nextCheckinTime: CHECKIN_ENABLED ? now.getTime() + (parseInt(CHECKIN_INTERVAL) * 60 * 1000) : null, 
-            batteryAlertSent: false
+            batteryAlertSent: initialBatteryNote.includes("(LOW)") // Track if initial warning was sent
         };
         if (location.name === 'Travelling') {
             state.activeVisit.lastTravelGpsTime = now.getTime();
@@ -427,7 +432,8 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
             "Location Address": location.address,
             "Arrival Time": state.activeVisit.arrivalTimeForSheet,
             "Anticipated Departure Time": anticipatedDepartureTime.toISOString(),
-            "Alarm Status": 'ON SITE', // Status remains ON SITE
+            "Alarm Status": 'ON SITE', 
+            "Notes": initialBatteryNote // Send initial battery level
         });
         enterLockedScreen();
     }
@@ -460,7 +466,7 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
         document.getElementById('lockedAnticipatedTime').textContent = new Date(state.activeVisit.anticipatedDepartureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'});
     }
     function depart() {
-        if (!state.activeVisit) return; // Prevent errors if called when no visit active
+        if (!state.activeVisit) return; 
         const now = new Date();
         sendToGoogleSheet({
             "Arrival Time": state.activeVisit.arrivalTimeForSheet,
@@ -509,7 +515,8 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
         updateArrivedButtonState();
         document.getElementById('alertActiveContainer').classList.add('hidden');
         document.getElementById('normalButtonsContainer').classList.remove('hidden');
-        if(synth) synth.volume.value = 0; // Reset volume 
+        if(synth) synth.volume.value = 0; 
+        lastBatteryReportTime = 0; // Reset battery report timer
     }
     function tryGetGps(notePrefix = "Overdue GPS") {
         if (!state.activeVisit) return; 
@@ -528,6 +535,7 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
             { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
         );
     }
+    // --- UPDATED tick FUNCTION ---
     async function tick() {
         if (!state.activeVisit) { clearInterval(visitInterval); visitInterval = null; return; }
         updateLockedScreen();
@@ -570,24 +578,45 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
             state.activeVisit.nextCheckinTime = null; // Prevent re-triggering immediately
         }
 
-        if (navigator.getBattery && !state.activeVisit.batteryAlertSent) {
+        // --- Battery Check Logic Updated ---
+        const BATTERY_REPORT_INTERVAL = 15 * 60 * 1000; // Report every 15 minutes
+        if (navigator.getBattery && (now - lastBatteryReportTime) > BATTERY_REPORT_INTERVAL) {
+             lastBatteryReportTime = now; // Update time immediately
             try {
                 const battery = await navigator.getBattery();
-                if (battery.level < 0.15 && !battery.charging) {
-                    sendToGoogleSheet({ "Arrival Time": state.activeVisit.arrivalTimeForSheet, "Notes": `LOW BATTERY WARNING: ${Math.floor(battery.level * 100)}%` });
-                    state.activeVisit.batteryAlertSent = true;
-                    saveState();
+                const level = Math.floor(battery.level * 100);
+                let batteryNote = `Battery: ${level}%`;
+                
+                // Only send LOW BATTERY note once per visit if it transitions to low
+                if (level < 15 && !battery.charging && !state.activeVisit.batteryAlertSent) {
+                    batteryNote += " (LOW - WARNING)";
+                    state.activeVisit.batteryAlertSent = true; // Mark warning as sent
+                     sendToGoogleSheet({ 
+                        "Arrival Time": state.activeVisit.arrivalTimeForSheet, 
+                        "Notes": batteryNote 
+                    });
+                } else if (!state.activeVisit.batteryAlertSent) { 
+                     // Send regular update only if low warning hasn't been sent yet
+                      sendToGoogleSheet({ 
+                        "Arrival Time": state.activeVisit.arrivalTimeForSheet, 
+                        "Notes": batteryNote 
+                    });
                 }
+                saveState(); // Save state if batteryAlertSent was updated
             } catch(e) { console.warn("Could not check battery:", e); }
         }
-        saveState();
+        // --- End Battery Check Logic ---
+        
+        saveState(); // Save state potentially updated by battery check
     }
+    // --- END UPDATED tick ---
+
     function triggerPanicAlert() {
         if (!state.activeVisit) return; 
         playSoundAndVibrate('panic');
         showAlert("PANIC ALERT SENT", "An immediate alert has been sent to your emergency contact.");
         const sendPanic = (gpsData) => {
-             if (!state.activeVisit) return; // Check again
+             if (!state.activeVisit) return; 
             const data = { "Arrival Time": state.activeVisit.arrivalTimeForSheet, "Alarm Status": 'EMERGENCY - PANIC BUTTON', "Notes": 'Panic button activated by worker.' };
             if (gpsData) {
                 data["Last Known GPS"] = `${gpsData.latitude},${gpsData.longitude}`;
@@ -621,14 +650,11 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
 
         if (checkinCountdownInterval) clearInterval(checkinCountdownInterval);
 
-        // Audio setup for volume control (ensure synth is initialized)
         initAudio().then(() => {
             if (!synth) synth = new Tone.Synth().toDestination();
-            // Start volume low
-            synth.volume.value = -20; // Tone.js uses decibels, -20dB is fairly quiet
+            synth.volume.value = -20; 
         });
         
-        // Initial gentle vibration
         if ('vibrate' in navigator) navigator.vibrate(200); 
 
         checkinCountdownInterval = setInterval(() => {
@@ -638,24 +664,22 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
             countdownEl.textContent = `${minutes}:${String(seconds).padStart(2, '0')}`;
 
             // --- Escalation Logic ---
-            const elapsedRatio = (totalDuration - remaining) / totalDuration; // 0.0 to 1.0
+            const elapsedRatio = (totalDuration - remaining) / totalDuration; 
             
-            // Gradually increase volume
             if (synth && elapsedRatio >= 0.5) {
                 const volumeRatio = (elapsedRatio - 0.5) * 2; 
-                synth.volume.value = Tone.gainToDb(volumeRatio * 0.9 + 0.1); 
+                const gain = volumeRatio * 0.9 + 0.1; 
+                synth.volume.value = Tone.gainToDb(gain); 
             } else if (synth) {
-                 synth.volume.value = -20; // Keep it low
+                 synth.volume.value = -20; 
             }
 
-            // Increase vibration intensity/frequency
             if (remaining <= 30 && remaining % 2 === 0 && 'vibrate' in navigator) {
                  navigator.vibrate([300, 100, 300]); 
             } else if (remaining > 30 && remaining % 5 === 0 && 'vibrate' in navigator) {
                  navigator.vibrate(200); 
             }
             
-            // Play sound more frequently
              if (remaining <= 60 && remaining % 3 === 0) { 
                  playSoundAndVibrate('checkin'); 
              } else if (remaining > 60 && remaining % 10 === 0) { 
@@ -672,7 +696,7 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
                 sendToGoogleSheet({ "Arrival Time": state.activeVisit.arrivalTimeForSheet, "Alarm Status": 'MISSED_CHECKIN', "Notes": 'Worker missed a scheduled check-in.' });
                 document.getElementById('alertActiveContainer').classList.remove('hidden');
                 document.getElementById('normalButtonsContainer').classList.add('hidden');
-                if(synth) synth.volume.value = 0; // Reset volume
+                if(synth) synth.volume.value = 0; 
             }
         }, 1000);
     }
@@ -685,7 +709,7 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
          if (!state.activeVisit) return; 
         state.activeVisit.nextCheckinTime = new Date().getTime() + (parseInt(CHECKIN_INTERVAL) * 60 * 1000); 
         saveState();
-        if(synth) synth.volume.value = 0; // Reset volume
+        if(synth) synth.volume.value = 0; 
     }
     // --- END UPDATED FUNCTIONS ---
 
@@ -811,7 +835,7 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
                     useCurrentLocationBtn.textContent = "Use Current Location";
                     useCurrentLocationBtn.disabled = false;
                 },
-                 { timeout: 10000 } // Add timeout
+                 { timeout: 10000 } 
             );
         });
         durationSlider.addEventListener('input', (e) => {
@@ -839,7 +863,7 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
             const tolerance = 10; 
             const start = (e) => {
                 if (element.disabled) return;
-                e.preventDefault(); // Important for touch events
+                e.preventDefault(); 
                 if (e.type === 'touchstart' && e.touches.length > 0) {
                     startX = e.touches[0].clientX;
                     startY = e.touches[0].clientY;
@@ -861,7 +885,7 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
                 element.classList.remove('pressing');
             };
             const move = (e) => {
-                if (!timer) return; // Only act if timer is active
+                if (!timer) return; 
                 let currentX, currentY;
                  if (e.type === 'touchmove' && e.touches.length > 0) {
                     currentX = e.touches[0].clientX;
@@ -882,7 +906,7 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
             element.addEventListener('touchend', cancel);
             element.addEventListener('touchcancel', cancel);
             element.addEventListener('touchmove', move, { passive: false });
-            element.addEventListener('mousemove', move); // Added for mouse
+            element.addEventListener('mousemove', move); 
         };
 
         applyLongPress(arrivedBtn, handleArriveLongPress);
@@ -921,12 +945,13 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
             });
         } 
         loadState(); 
+        updateArrivedButtonState(); // Ensure button text is correct on initial load
         if (state.activeVisit) {
             enterLockedScreen();
         } else {
             navigate('main');
             renderLocations();
-            updateArrivedButtonState();
+            // updateArrivedButtonState(); // Already called above
         } 
         initEventListeners(); 
         Object.keys(pages).forEach(key => { if (pages[key] && !pages[key].classList.contains('active')) { pages[key].classList.add('hidden'); } });
