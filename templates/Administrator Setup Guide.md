@@ -1,98 +1,279 @@
-# Administrator Setup Guide: Lone Worker Safety System
+Administrator Setup Guide: Lone Worker Safety System (Detailed)
 
-Welcome! This guide will walk you through the entire process of setting up your free, self-hosted Lone Worker Safety System.
+Welcome! This guide provides , step-by-step instructions for setting up your free, self-hosted Lone Worker Safety System. We'll use a special web-based setup tool to make this easier.
 
-This process uses a setup tool to simplify configuration.
+Target Audience: This guide assumes you have average computer skills (using web browsers, copy/pasting text, managing files) but may not have experience with code hosting platforms like GitHub.
 
-## **Part 1: Host the Deployment Tool**
+Estimated Time: 30-45 minutes.
 
-Before you can set up the system, you must host this setup package on a web server. The easiest free method is using GitHub Pages.
+Part 1: Making the Setup Tool Accessible Online
 
-1.  **Create a GitHub Repository:**
-    * Log in to GitHub and create a new, **public** repository (e.g., "lws-deploy").
-2.  **Upload All Files:**
-    * Upload all files from this package into your new repository.
-    * **Crucially:** You must create a `/templates` folder (lowercase) and put the 8 template files inside it. The `setup.html` file should be in the root.
-3.  **Enable GitHub Pages:**
-    * In your repository, go to `Settings` > `Pages`.
-    * Under "Branch", select your main branch (e.g., `main`) and set the folder to `/root`. Click **Save**.
-    * GitHub will give you a public URL for your site (e.g., `https://your-username.github.io/lws-deploy/`). It may take a minute to become active.
-4.  **Launch the Tool:**
-    * Go to the `setup.html` page at your new URL.
-    * **Example:** `https://your-username.github.io/lws-deploy/setup.html`
+The setup.html file is a webpage that helps you configure the system. Because modern web browsers have security features that limit what local HTML files can do (like copying text reliably or accessing other files), we first need to put the setup tool and its templates online. The easiest and free way to do this is using GitHub Pages.
 
-You will now see the setup wizard.
+1.1 Create a Free GitHub Account (If you don't have one)
 
----
+Go to https://github.com/.
 
-## **Part 2: Use the Setup Wizard**
+Click "Sign up".
 
-Follow the steps in the setup tool you just launched.
+Follow the on-screen instructions to create a free account (choose a username, enter your email, create a password). You do not need any paid options.
 
-### **Step 1: Welcome**
-* Read the introduction and click "Start Setup".
+Verify your email address if prompted.
 
-### **Step 2: Sheet Setup**
-* Click the link to open a new Google Sheet (`sheets.new`).
-* Click the **"Copy Headers"** button in the wizard.
-* In your sheet, click **once** on cell **A1**.
-* **Paste** the copied text (Ctrl+V or Cmd+V). The headers should **automatically** fill row 1 (A1 to R1).
-* (Optional but Recommended) Freeze the header row: Go to **View > Freeze > 1 row**.
+1.2 Create a New Repository
 
-### **Step 3: Deploy Script**
-* This is the most important part.
-* In your Google Sheet, go to `Extensions` > `Apps Script`.
-* Delete any existing code in `Code.gs`.
-* **Create your Secret Key:** Enter a strong, private password into the "Create a Secret Key" box in the wizard.
-* Click the **"Copy Script"** button in the wizard. This copies the script code with your key already inserted.
-* Paste the copied code into the empty `Code.gs` editor.
-* Follow the on-screen instructions to **Deploy** the script as a **Web app** (Execute as: Me, Who has access: Anyone).
-* **Authorize** the script (click "Advanced", "Go to...", "Allow").
-* After it's deployed, **copy the "Web app URL"**.
-* Finally, follow the instructions to set up the **5-minute trigger** for the `checkOverdueWorkers` function.
+A "repository" is like an online folder for your project files.
 
-### **Step 4: Configure Apps**
-* Paste the **Web app URL** (from the previous step) into the first box.
-* The **Secret Key** field will be auto-filled for you.
-* Configure the other options as you wish.
-* Click **"Test Connection & Proceed"**. The tool will check if your URL and Key are correct. If it succeeds, you'll move to the final step.
+Once logged in to GitHub, click the "+" icon in the top-right corner, then select "New repository".
 
-### **Step 5: Download**
-* Click the **"Generate & Download .zip Package"** button.
-* Your browser will download a file named `LWS_Deployment_Package.zip`. This file contains your *finished, customized* apps.
+Repository name: Give it a simple name, like lws-deploy-tool.
 
----
+Description (Optional): You can add something like "Deployment tool for Lone Worker Safety system".
 
-## **Part 3: Host Your Final Apps**
+Select "Public". This is required for GitHub Pages to work on a free account.
 
-You are now finished with the setup tool. Your final step is to host the apps from the `.zip` file you just downloaded.
+Do Not initialize with a README, .gitignore, or license for simplicity right now.
 
-1.  **Unzip the File:**
-    * Unzip the `LWS_Deployment_Package.zip` file.
-    * Inside, you will find two folders: `LoneWorkerApp` and `MonitoringDashboardApp`. You will also find documentation and the Apps Script code for your records.
+Click "Create repository".
 
-2.  **Host the Apps:**
-    * You must host these two folders publicly. We recommend using a free, simple hosting service like **Netlify Drop**.
-    * Go to [app.netlify.com/drop](https://app.netlify.com/drop).
-    * Drag and drop the **`LoneWorkerApp` folder** onto the page. Netlify will give you a unique, public URL. This is your **Worker App URL**.
-    * Go back to [app.netlify.com/drop](https://app.netlify.com/drop) again.
-    * Drag and drop the **`MonitoringDashboardApp` folder** onto the page. Netlify will give you a *different* public URL. This is your **Monitoring App URL**.
+1.3 Upload the Setup Files
 
----
+You need to upload the setup.html file and the templates folder (with all its contents) to this new repository.
 
-## **Part 4: Distribute to Your Team**
+On your new repository page, click the "Add file" button, then select "Upload files".
 
-### **For Your Safety Monitor:**
-* Send them the **Monitoring App URL** (from Step 3.2).
-* When they open it, it will work immediately. No login is required.
+Drag and Drop: Find the setup.html file on your computer and drag it onto the GitHub upload area.
 
-### **For Your Lone Workers:**
-* Send them the **Worker App URL** (from Step 3.2).
-* When they open it, they must:
-    * Follow the on-screen instructions to **"Add to Home Screen"** or **"Install App"**. This is essential.
-    * Open the app from their home screen.
-    * Go to **Settings** (gear icon). The "Google Sheet Web App URL" will be pre-filled.
-    * Fill in **all other fields**: their name, phone, emergency contacts, and a 4-digit PIN and Duress PIN.
-    * Click **Save Settings**.
+Upload the Templates Folder: Find the entire templates folder (which contains the .txt, .md, .json, and .js files) on your computer. Drag this entire folder onto the same GitHub upload area.
 
-**Your system is now fully operational.**
+Important: Make sure the folder is named templates (all lowercase). GitHub should show it uploading the folder and the files inside it.
+
+Commit changes: Once the files/folder are listed, scroll down. You can leave the default commit message ("Add files via upload"). Click the "Commit changes" button.
+
+1.4 Enable GitHub Pages
+
+This turns your repository into a live website.
+
+In your repository, click the "Settings" tab (usually near the top right).
+
+On the left sidebar, click "Pages".
+
+Under the "Build and deployment" section, for the "Source", select "Deploy from a branch".
+
+Under "Branch", ensure your main branch is selected (usually main or master). Leave the folder as /root. Click "Save".
+
+Wait: The page will reload. At the top, it might say "Your site is live at..." or it might take a minute or two. Refresh the page after a minute if needed. GitHub will provide you with the public URL for your site (e.g., https://your-username.github.io/lws-deploy-tool/).
+
+1.5 Launch the Setup Tool
+
+Go to the public URL GitHub gave you in the previous step, but add setup.html to the end.
+
+Example: https://your-username.github.io/lws-deploy-tool/setup.html
+
+Bookmark this page – this is your setup tool!
+
+You should now see the "Welcome to the LWS Setup Wizard" screen.
+
+Part 2: Use the Setup Wizard
+
+Now, follow the steps presented in the setup tool webpage.
+
+Step 1: Welcome
+
+Read the introduction. It explains that the tool will fetch the templates (which you just uploaded) and guide you.
+
+Click the "Start Setup" button.
+
+Step 2: Sheet Setup
+
+This step prepares the Google Sheet that will act as your database.
+
+Create Sheet: Click the sheets.new link. It will open a new, blank Google Sheet in another browser tab. Give this sheet a recognizable name (e.g., "Lone Worker Data").
+
+Copy Headers: Go back to the setup tool tab. Click the "Copy" button next to the list of headers. This copies the list to your clipboard, separated by invisible tab characters.
+
+Paste Headers: Go back to your blank Google Sheet tab. Click once in the very first cell (cell A1). Press Ctrl+V (or Cmd+V on Mac) to paste. Because the headers were copied with tabs, Google Sheets should automatically place each header into its own cell across the first row (A1, B1, C1, ..., R1). Verify this happened correctly.
+
+Proceed: Go back to the setup tool tab and click the "Next Step" button.
+
+Step 3: Deploy Script
+
+This is the most technical part, where you install the "brain" of the system into your Google Sheet. Follow these instructions carefully.
+
+Open Script Editor: In your Google Sheet tab, click the Extensions menu, then select Apps Script. A new browser tab will open with the script editor.
+
+Clear Existing Code: Select any code already present in the Code.gs window (e.g., function myFunction() {}) and delete it.
+
+Create Secret Key: Go back to the setup tool tab (Step 3). Type a strong, unique password into the "Create a Secret Key" box. Treat this like any important password. You'll need it again shortly.
+
+Copy Customized Script: Click the "Copy Script" button in the setup tool. This copies the entire backend code with your Secret Key already inserted into the correct place.
+
+Paste Script: Go back to the Apps Script editor tab and paste (Ctrl+V or Cmd+V) the copied code into the empty editor window.
+
+Save Script: Click the Save icon (looks like a floppy disk). Give the script project a name when prompted (e.g., "LWS Backend Script").
+
+Deploy:
+
+Click the blue Deploy button (top right).
+
+Select New deployment.
+
+A dialog box will appear. Click the gear icon next to "Select type" and choose Web app.
+
+Fill in the details:
+
+Description (optional): e.g., "LWS Backend v1"
+
+Execute as: Me (Your Google Account)
+
+Who has access: Anyone (This is crucial!)
+
+Click Deploy.
+
+Authorize: Google needs your permission to let the script run.
+
+Click Authorize access.
+
+Choose the Google account you used to create the sheet.
+
+A "Google hasn’t verified this app" screen will appear. This is normal because it's your own script. Click Advanced.
+
+Click "Go to [Your Script Name] (unsafe)".
+
+Review the permissions (it will need to manage Spreadsheets and send emails) and click Allow.
+
+Copy Web App URL: After authorization, a box appears showing the deployment details. Crucially, copy the Web app URL (the one ending in /exec). Save this URL somewhere safe temporarily (like Notepad).
+
+Click Done.
+
+Set Up Trigger: The script needs to run automatically to check for overdue workers.
+
+In the Apps Script editor, click the Triggers icon (looks like an alarm clock) on the left sidebar.
+
+Click the Add Trigger button (bottom right).
+
+Configure the trigger exactly as follows:
+
+Choose which function to run: checkOverdueWorkers
+
+Choose which deployment should run: Head
+
+Select event source: Time-driven
+
+Select type of time based trigger: Minutes timer
+
+Select minute interval: Every 5 minutes
+
+Error notification settings: Choose your preference (e.g., "Notify me immediately").
+
+Click Save. You might need to authorize the script again; if so, repeat the authorization steps.
+
+Proceed: Go back to the setup tool tab and click the "Next Step" button.
+
+Step 4: Configure Apps
+
+Here, you provide the details the setup tool needs to build the final Worker and Monitor apps.
+
+Web App URL: Paste the Web app URL you copied from the Apps Script deployment step into this field. The tool will check if the format looks correct.
+
+Secret Key: This field should be automatically filled with the key you created in Step 3. You can see it here to double-check, but you cannot change it.
+
+First Overdue Alert: Set how many minutes after the anticipated departure time the first alert should be triggered. 15 is standard.
+
+Enable Check-ins: Tick this box if you want workers to be prompted periodically ("Are you OK?").
+
+Check-in Interval: If you enabled check-ins, set how often (in minutes) workers should be prompted. 30 is a common starting point.
+
+Company Logo URL (Optional): If you have a company logo hosted online (must be a direct link to a .png or .jpg file), you can paste the URL here. It will be used as the icon for the Worker App when installed on a phone. If left blank, a default icon is used.
+
+Test Connection: Click the "Test Connection & Proceed" button. The tool will try to contact your deployed Apps Script using the URL and Key.
+
+If it shows "Success! Connection verified.", you're good to go! The tool will automatically move to the next step.
+
+If it shows an error (like "Access Denied" or "Could not connect"), double-check the Web App URL you pasted and the Secret Key you created in Step 3. Ensure your Apps Script is deployed with access set to "Anyone".
+
+Step 5: Download
+
+If the connection test was successful, you'll reach the final step.
+
+Click the "Generate & Download .zip Package" button.
+
+The setup tool will process the templates, inject your settings, and package everything. Your browser will then download a file named LWS_Deployment_Package.zip, likely to your computer's "Downloads" folder.
+
+Part 3: Host Your Final Apps
+
+You're finished with the setup tool! The .zip file contains the actual, customized apps ready for your team. Now you need to put these online.
+
+3.1 Unzip the File
+
+Find the LWS_Deployment_Package.zip file you downloaded.
+
+Unzip it (usually by right-clicking and selecting "Extract All..." or similar).
+
+Inside the extracted folder, you'll see:
+
+LoneWorkerApp folder (contains index.html, manifest.json, sw.js)
+
+MonitoringDashboardApp folder (contains index.html)
+
+Documentation folder (contains copies of these guides)
+
+01-PASTE_THIS_INTO_APPS_SCRIPT.txt (a backup copy of the script code you deployed)
+
+3.2 Host the Apps (Using Netlify Drop)
+
+Netlify Drop is a very simple drag-and-drop web hosting service, perfect for this.
+
+Host Worker App:
+
+Go to https://app.netlify.com/drop in your browser.
+
+Drag the entire LoneWorkerApp folder (not just the files inside it) from your computer onto the Netlify Drop page where it says "Drag and drop your site folder here".
+
+Netlify will upload it and generate a unique public website address (URL), like https://random-words-12345.netlify.app.
+
+Copy this URL and save it. This is your Worker App URL.
+
+Host Monitor App:
+
+Go back to https://app.netlify.com/drop again (you might need to refresh the page or open it anew).
+
+Drag the entire MonitoringDashboardApp folder onto the Netlify Drop page.
+
+Netlify will generate a different unique public URL.
+
+Copy this URL and save it. This is your Monitoring App URL.
+
+(Note: If you already have another web hosting provider, you can simply upload the contents of these two folders there instead of using Netlify Drop.)
+
+Part 4: Distribute to Your Team
+
+Now you provide the links to your staff.
+
+For Your Safety Monitor:
+
+Send them the Monitoring App URL you saved in Step 3.2.
+
+When they open this link, the monitoring dashboard should load immediately and start checking for active workers. No login or setup is needed for them.
+
+For Your Lone Workers:
+
+Send them the Worker App URL you saved in Step 3.2.
+
+Instructions for Workers:
+
+Open the link on their smartphone.
+
+Follow the browser's prompts to "Add to Home Screen" (iOS/Safari) or "Install app" / "Add to Home Screen" (Android/Chrome). This is crucial for the app to work reliably.
+
+Open the newly installed app from their phone's home screen.
+
+Tap the Settings icon (gear, top right).
+
+Confirm the "Google Sheet Web App URL" is already filled in.
+
+Fill in all other fields: their Name, Phone, Emergency Contact details, Escalation Contact details, a 4-digit normal PIN, and a different 4-digit Duress PIN.
+
+Tap "Save Settings".
+
+Setup Complete! Your Lone Worker Safety system is now fully configured and operational. Ensure your workers understand how to use the app (refer them to the Info section within their app) and your monitors understand the dashboard and alert procedures.
