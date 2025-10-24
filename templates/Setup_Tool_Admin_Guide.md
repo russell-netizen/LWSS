@@ -8,10 +8,12 @@
 
 ### **1. Prepare Your Files**
 
-Ensure you have the following files and folder structure ready on your computer:
+Ensure you have the following files and folder structure ready on your computer. The `Deployment_Admin_Guide.md` file (which the setup tool will include in the generated zip for end-users) should be inside the `templates` folder.
 
 <img width="375" height="277" alt="image" src="https://github.com/user-attachments/assets/5d83c27f-0007-4cd9-82fe-7a6100dd2a7a" />
 
+
+*(**Note:** The `Deployment_Admin_Guide.md` file should already be correctly named within the `templates` folder as provided in the complete file set).*
 
 ### **2. Create a Free GitHub Account (If you don't have one)**
 
@@ -30,7 +32,7 @@ Ensure you have the following files and folder structure ready on your computer:
 
 * On your new repository page, click **"Add file"** > **"Upload files"**.
 * Drag the `setup.html` file onto the upload area.
-* Drag the **entire `templates` folder** (now containing `Deployment_Admin_Guide.md`) onto the upload area. Ensure the folder name is lowercase `templates`.
+* Drag the **entire `templates` folder** onto the upload area. Ensure the folder name is lowercase `templates`.
 * Scroll down and click **"Commit changes"**.
 
 ### **5. Enable GitHub Pages**
@@ -39,7 +41,7 @@ Ensure you have the following files and folder structure ready on your computer:
 * Click **"Pages"** in the left sidebar.
 * Under "Build and deployment", set "Source" to **"Deploy from a branch"**.
 * Under "Branch", select `main` (or `master`), folder `/root`, and click **"Save"**.
-* **Wait:** GitHub will provide a public URL (e.g., `https://your-username.github.io/lws-deploy-tool/`). It might take a minute or two to become active.
+* **Wait:** GitHub will provide a public URL (e.g., `https://your-username.github.io/lws-deploy-tool/`). It might take a minute or two to become active. 
 
 ### **6. Get the Tool URL**
 
@@ -47,7 +49,4 @@ Ensure you have the following files and folder structure ready on your computer:
 * **Example:** `https://your-username.github.io/lws-deploy-tool/setup.html`
 * Share this URL with your Deployment Administrators.
 
-**Hosting Complete:** The setup tool is now live and ready for your administrators to use. They will follow the instructions provided *within* the tool (which uses the `Deployment_Admin_Guide.md` content).
-
-
-
+**Hosting Complete:** The setup tool is now live and ready for your administrators to use. They will follow the instructions provided *within* the tool itself.
