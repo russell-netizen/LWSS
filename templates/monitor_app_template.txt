@@ -13,36 +13,35 @@
         @keyframes flash-purple { 0%, 100% { background-color: #5b21b6; } 50% { background-color: #a78bfa; } }
         .flashing-alert { animation: flash-red 1s infinite; }
         .flashing-duress { animation: flash-purple 1s infinite; }
+        /* Style for stale GPS warning */
+        .gps-stale { color: #facc15; /* yellow-400 */ font-weight: 600; } 
     </style>
 </head>
 <body class="bg-gray-800 text-white h-full overflow-hidden">
 
+<!-- SETUP_PAGE_START -->
 <div id="setupPage" class="h-full flex items-center justify-center p-4 bg-gray-900">
-    <div class="w-full max-w-md text-center">
-        <h1 class="text-3xl font-bold text-blue-400 mb-4">Monitoring Dashboard Setup</h1>
-        <p class="text-gray-400 mb-6">Enter the Google Sheet Web App URL and the Secret Key to begin monitoring.</p>
-        <div class="space-y-4">
-            <div>
-                <label for="googleSheetUrl" class="sr-only">Google Sheet Web App URL</label>
-                <input type="url" id="googleSheetUrl" class="block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-3 px-4 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Paste Web App URL here">
-            </div>
-            <div>
-                <label for="secretKey" class="sr-only">Secret Key</label>
-                <input type="password" id="secretKey" class="block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-3 px-4 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Enter Secret Key">
-            </div>
-            <button type="button" id="saveUrlBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg">Start Monitoring</button>
-        </div>
-    </div>
+    {/* ... Setup page content (removed by setup tool) ... */}
 </div>
-<div id="dashboardPage" class="h-full flex-col hidden"> <header class="flex-shrink-0 bg-gray-900 shadow-lg z-10" style="-webkit-app-region: drag">
+<!-- SETUP_PAGE_END -->
+
+<div id="dashboardPage" class="h-full flex flex-col hidden">
+    <header class="flex-shrink-0 bg-gray-900 shadow-lg z-10" style="-webkit-app-region: drag">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <h1 class="text-2xl font-bold text-blue-400">Lone Worker Monitor</h1>
+                {/* --- ADDED LOGO --- */}
+                <div class="flex items-center">
+                    <img src="%%LOGO_URL%%" alt="Logo" class="h-8 w-8 mr-3 rounded" onerror="this.style.display='none'"> 
+                    <h1 class="text-2xl font-bold text-blue-400">Lone Worker Monitor</h1>
+                </div>
+                {/* --- END LOGO --- */}
                 <div class="flex items-center space-x-2">
                     <span id="statusIndicator" class="h-3 w-3 rounded-full bg-gray-500" title="Connection Status"></span>
                     <span id="lastUpdated" class="text-sm text-gray-500"></span>
-                    <button type="button" id="resetUrlBtn" class="p-2 rounded-full hover:bg-gray-700"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2.82l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l-.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2.82l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                    </div>
+                    <!-- RESET_BUTTON_START -->
+                    {/* ... Reset button content (removed by setup tool) ... */}
+                    <!-- RESET_BUTTON_END -->
+                </div>
             </div>
         </div>
     </header>
@@ -51,7 +50,8 @@
             <p><strong>Warning:</strong> The database exceeds 2,500 rows. Please advise the administrator to trim the database for optimal performance.</p>
             <button type="button" id="closeWarningBtn" class="ml-4 text-2xl font-bold">×</button>
         </div>
-        <div id="workerList" class="space-y-3">
+        <div id="workerList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Worker cards will be inserted here */}
         </div>
     </main>
 </div>
@@ -82,16 +82,9 @@
 </div>
 
 <script>
-    // --- NEW PLACEHOLDERS (Will be replaced by setup tool) ---
-    const LWS_CONFIG = {
-        sheetUrl: "%%SHEET_URL%%",
-        secretKey: "%%SECRET_KEY%%"
-    };
-    // --- END PLACEHOLDERS ---
-
     let setupPage, dashboardPage, googleSheetUrlInput, saveUrlBtn, resetUrlBtn, workerList, statusIndicator, lastUpdatedEl, alertOverlay, alertDetails, acknowledgeBtn, modalBackdrop, alertModal, alertModalTitle, alertModalMessage, alertModalOkBtn, secretKeyInput, sizeWarningBanner, closeWarningBtn, resolveModal, resolveWorkerName, resolveConfirmInput, cancelResolveBtn, confirmResolveBtn;
-    // Removed sheetUrl and secretKey from here, will use LWS_CONFIG instead
-
+    let sheetUrl = '';
+    let secretKey = '';
     let pollingInterval;
     let lastKnownStatuses = {};
     let alarm;
@@ -99,18 +92,16 @@
 
     function navigate(page) {
         if (page === 'setup') {
-            // This case should no longer be hit in the generated file
-            if(setupPage) setupPage.classList.remove('hidden');
+            if (setupPage) setupPage.classList.remove('hidden');
             dashboardPage.classList.add('hidden');
         } else if (page === 'dashboard') {
-            if (setupPage) setupPage.classList.add('hidden'); // Hide setup page if it exists
+            if (setupPage) setupPage.classList.add('hidden'); 
             dashboardPage.classList.remove('hidden');
             dashboardPage.classList.add('flex');
         }
     }
     
-    // ... (rest of functions: showModal, hideModals, showAlert, initAudio, playUpdateSound, playAlarm, stopAlarm remain the same) ...
-     function showModal(modal, onShow) {
+    function showModal(modal, onShow) {
         modalBackdrop.classList.remove('hidden');
         modalBackdrop.classList.add('flex');
         alertModal.classList.add('hidden');
@@ -126,13 +117,13 @@
         alertModal.classList.add('hidden');
         resolveModal.classList.add('hidden');
     }
-    function showAlert(title, message) {
+    function showAlert(title, message) { 
         if (!alertModalTitle) { console.error("showAlert called before elements were initialized."); return; }
-        alertModalTitle.textContent = title;
-        alertModalMessage.textContent = message;
+        alertModalTitle.textContent = title; 
+        alertModalMessage.textContent = message; 
         showModal(alertModal);
     }
-
+    
     async function initAudio() {
         if (alarm) return;
         try {
@@ -140,11 +131,12 @@
             alarm = new Tone.Synth({ oscillator: { type: "square" }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.5, release: 0.1 } }).toDestination();
             updateChime = new Tone.Synth().toDestination();
             console.log("Audio context for alarm started.");
-        } catch(e) {
-            console.error("Audio context failed to start:", e);
+        } catch (e) {
+             console.error("Could not start audio context:", e);
+             showAlert("Audio Error", "Could not initialize audio for alerts. Please check browser permissions.");
         }
     }
-
+    
     function playUpdateSound() {
         initAudio().then(() => {
             if (!updateChime) return;
@@ -153,10 +145,10 @@
             updateChime.triggerAttackRelease("C5", "16n", now + 0.2);
         });
     }
-
+    
     function playAlarm(worker) {
         initAudio().then(() => {
-             if (!alarm) return;
+            if (!alarm) return;
             if (window.electron) window.electron.sendAlert();
             if (!alarm.loop) {
                 alarm.loop = new Tone.Loop(time => {
@@ -164,10 +156,10 @@
                 }, "4n").start(0);
             }
              if (Tone.Transport.state !== 'started') {
-                Tone.Transport.start();
-            }
-            alertDetails.innerHTML = '<p class="font-bold text-4xl">' + worker['Worker Name'] + '</p><p>at ' + worker['Location Name'] + '</p><p class="mt-4 text-red-300 font-bold">' +
-                worker['Alarm Status'] + '</p>';
+                 Tone.Transport.start();
+             }
+            alertDetails.innerHTML = '<p class="font-bold text-4xl">' + worker['Worker Name'] + '</p><p>at ' + worker['Location Name'] + '</p><p class="mt-4 text-red-300 font-bold">' + 
+                worker['Alarm Status'].replace(/_/g, ' ') + '</p>';
             alertOverlay.classList.remove('hidden', 'flashing-duress', 'flashing-alert');
             alertOverlay.classList.add('flex');
             if (worker['Alarm Status'] === 'DURESS_CODE_ACTIVATED') {
@@ -179,12 +171,12 @@
             acknowledgeBtn.dataset.workerName = worker['Worker Name'];
         });
     }
-
+    
     function stopAlarm() {
-        if (alarm && Tone.Transport.state === 'started') {
+        if (Tone.Transport.state === 'started') {
             Tone.Transport.stop();
             Tone.Transport.cancel();
-            if(alarm.loop) {
+            if(alarm && alarm.loop) {
                 alarm.loop.dispose();
                 alarm.loop = null;
             }
@@ -193,35 +185,32 @@
         alertOverlay.classList.remove('flex');
     }
 
-
     function fetchData() {
-        // Use injected config
-        const currentSheetUrl = LWS_CONFIG.sheetUrl;
-        const currentSecretKey = LWS_CONFIG.secretKey;
-
-        if (!currentSheetUrl || !currentSheetUrl.startsWith('http') || !currentSecretKey) {
-            console.error("Configuration missing or invalid:", LWS_CONFIG);
-             showAlert("Configuration Error", "Sheet URL or Secret Key is missing or invalid. Please contact administrator.");
-             if(pollingInterval) clearInterval(pollingInterval); // Stop polling
-            return;
-        }
-
+        if (!sheetUrl || !secretKey) return;
         statusIndicator.classList.remove('bg-green-500', 'bg-red-500');
         statusIndicator.classList.add('bg-yellow-500');
         
         const script = document.createElement('script');
         const callbackName = 'jsonp_callback_' + Date.now();
+        let timer; // Timeout timer
+
+        const cleanupJsonp = () => {
+             clearTimeout(timer);
+             delete window[callbackName];
+             if(document.body.contains(script)) {
+                 document.body.removeChild(script);
+             }
+        };
         
         window[callbackName] = function(data) {
-            delete window[callbackName];
-            if(document.body.contains(script)) document.body.removeChild(script);
+            cleanupJsonp();
             
             if (data.status === 'error' && data.message.includes('Access Denied')) {
                 console.error("Access Denied. Check Secret Key.");
                 statusIndicator.classList.remove('bg-yellow-500', 'bg-green-500');
                 statusIndicator.classList.add('bg-red-500');
                 lastUpdatedEl.textContent = 'Access Denied';
-                showAlert("Access Denied", "The Secret Key seems incorrect. Please contact your administrator.");
+                showAlert("Access Denied", "The Secret Key is incorrect. Please contact your administrator.");
                 clearInterval(pollingInterval);
                 return;
             }
@@ -232,6 +221,8 @@
                 lastUpdatedEl.textContent = 'Last updated: ' + new Date().toLocaleTimeString();
                 if (data.length >= 2500) {
                     sizeWarningBanner.classList.remove('hidden');
+                } else {
+                    sizeWarningBanner.classList.add('hidden'); // Hide if below limit
                 }
                 processData(data);
             } else {
@@ -242,28 +233,34 @@
             }
         };
         
-        script.src = currentSheetUrl + '?callback=' + callbackName + '&token=' + encodeURIComponent(currentSecretKey);
+        script.src = sheetUrl + '?callback=' + callbackName + '&token=' + encodeURIComponent(secretKey);
         
         script.onerror = () => {
-            delete window[callbackName];
-            if (document.body.contains(script)) {
-                document.body.removeChild(script);
-            }
+            cleanupJsonp();
             console.error("Fetch error: JSONP request failed. Check the URL and script deployment settings.");
             statusIndicator.classList.remove('bg-yellow-500', 'bg-green-500');
             statusIndicator.classList.add('bg-red-500');
             lastUpdatedEl.textContent = 'Update failed';
-            showAlert( "Connection Failed", "Could not fetch data. Check network connection, the Web App URL, or if the Apps Script is deployed correctly." );
+             console.error( "Connection Failed: Could not fetch data." );
         };
+
+        timer = setTimeout(() => {
+            if (window[callbackName]) { 
+                console.error("JSONP Request Timed Out");
+                cleanupJsonp();
+                 statusIndicator.classList.remove('bg-yellow-500', 'bg-green-500');
+                 statusIndicator.classList.add('bg-red-500');
+                 lastUpdatedEl.textContent = 'Timeout';
+            }
+        }, 20000); 
         
         document.body.appendChild(script);
     }
 
-    // ... (rest of functions: processData, renderWorkers, checkForNewAlerts, acknowledgeAlert, sendResolveAlert remain the same) ...
-     function processData(data) {
+    function processData(data) {
         const activeStatuses = ["ON SITE", "ALERT SENT", "MISSED_CHECKIN", "EMAIL_1_SENT", "EMAIL_2_SENT", "EMAIL_3_SENT", "EMERGENCY - PANIC BUTTON", "DURESS_CODE_ACTIVATED", "ESCALATION_SENT"];
         const activeWorkers = data.filter(worker => activeStatuses.includes(worker['Alarm Status']));
-
+        
         const statusPriority = {
             "DURESS_CODE_ACTIVATED": 1,
             "EMERGENCY - PANIC BUTTON": 2,
@@ -275,108 +272,151 @@
             "ALERT SENT": 8,
             "ON SITE": 9
         };
-
+        
         activeWorkers.sort((a,b) => (statusPriority[a['Alarm Status']] || 99) - (statusPriority[b['Alarm Status']] || 99) || a['Worker Name'].localeCompare(b['Worker Name']));
-
+        
         renderWorkers(activeWorkers);
         checkForNewAlerts(activeWorkers);
     }
 
+    function formatTimeAgo(timestamp) {
+        if (!timestamp) return 'Never';
+        const now = Date.now();
+        const past = new Date(timestamp).getTime();
+         // Check for invalid date
+        if (isNaN(past)) return 'Invalid Date'; 
+
+        const diffSeconds = Math.round((now - past) / 1000);
+        
+        // Handle future timestamps slightly (clock skew)
+        if (diffSeconds < 0) return 'Just now'; 
+
+        const diffMinutes = Math.round(diffSeconds / 60);
+        const diffHours = Math.round(diffMinutes / 60);
+
+        if (diffSeconds < 60) return `${diffSeconds}s ago`;
+        if (diffMinutes < 60) return `${diffMinutes}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        return `> ${Math.floor(diffHours / 24)}d ago`;
+    }
+    
     function renderWorkers(workers) {
         workerList.innerHTML = '';
         if (workers.length === 0) {
-            workerList.innerHTML = '<div class="text-center text-gray-500 mt-10"><p class="text-xl">No active workers found.</p><p>The dashboard is polling for updates.</p></div>';
+            workerList.innerHTML = '<div class="text-center text-gray-500 mt-10 md:col-span-2 lg:col-span-3"><p class="text-xl">No active workers found.</p><p>The dashboard is polling for updates.</p></div>';
             return;
         }
-
+        
         workers.forEach(worker => {
             let bgColor, textColor, borderColor, flashClass = '';
-
+            
             switch(worker['Alarm Status']) {
-                case 'DURESS_CODE_ACTIVATED':
-                    bgColor = 'bg-purple-800'; textColor = 'text-white'; borderColor = 'border-purple-400'; flashClass = 'flashing-duress'; break;
-                case 'EMERGENCY - PANIC BUTTON':
-                    bgColor = 'bg-red-700'; textColor = 'text-white'; borderColor = 'border-red-400'; flashClass = 'flashing-alert'; break;
+                case 'DURESS_CODE_ACTIVATED': bgColor = 'bg-purple-800'; textColor = 'text-white'; borderColor = 'border-purple-400'; flashClass = 'flashing-duress'; break;
+                case 'EMERGENCY - PANIC BUTTON': bgColor = 'bg-red-700'; textColor = 'text-white'; borderColor = 'border-red-400'; flashClass = 'flashing-alert'; break;
                 case 'ESCALATION_SENT':
-                case 'EMAIL_3_SENT':
-                case 'EMAIL_2_SENT':
-                case 'EMAIL_1_SENT':
-                case 'ALERT SENT':
-                case 'MISSED_CHECKIN':
-                    bgColor = 'bg-yellow-700'; textColor = 'text-white'; borderColor = 'border-yellow-400'; break;
-                default:
-                    bgColor = 'bg-gray-700'; textColor = 'text-gray-300'; borderColor = 'border-transparent';
+                case 'EMAIL_3_SENT': case 'EMAIL_2_SENT': case 'EMAIL_1_SENT':
+                case 'ALERT SENT': case 'MISSED_CHECKIN': bgColor = 'bg-yellow-700'; textColor = 'text-white'; borderColor = 'border-yellow-400'; break;
+                default: bgColor = 'bg-gray-700'; textColor = 'text-gray-300'; borderColor = 'border-transparent';
             }
+            
+            const anticipatedTime = new Date(worker['Anticipated Departure Time']).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            let batteryLevel = null;
+            let batteryColor = 'text-gray-400'; 
+            const notes = worker.Notes || '';
+            // Match "Battery: XX%" pattern, potentially followed by other text like " (LOW)"
+            const batteryMatch = notes.match(/Battery: (\d+)%/); 
+            if (batteryMatch && batteryMatch[1]) {
+                 batteryLevel = parseInt(batteryMatch[1], 10);
+                 if (batteryLevel < 15) batteryColor = 'text-red-400 animate-pulse';
+                 else if (batteryLevel < 30) batteryColor = 'text-yellow-400';
+                 else batteryColor = 'text-green-400';
+            }
+             const batteryHtml = batteryLevel !== null 
+                ? `<span class="text-xs ${batteryColor} ml-2 whitespace-nowrap">(<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="inline-block relative -top-px"><path d="M18.5 7H22v10H18.5l-2.5-5zM4 17V7h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4z"></path></svg>${batteryLevel}%)</span>` 
+                : '<span class="text-xs text-gray-500 ml-2 whitespace-nowrap">(Batt: N/A)</span>'; // Show N/A if no match
 
-            const anticipatedTime = new Date(worker['Anticipated Departure Time']).toLocaleTimeString([],
-                { hour: '2-digit', minute: '2-digit' });
+            const gpsTimestamp = worker['GPS Timestamp'];
+            const gpsAge = formatTimeAgo(gpsTimestamp);
+            let gpsStaleClass = '';
+            const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
+            if (worker['Location Name'] === 'Travelling' && (!gpsTimestamp || new Date(gpsTimestamp).getTime() < thirtyMinutesAgo)) {
+                 gpsStaleClass = 'gps-stale'; // Apply yellow warning color
+            }
+             const gpsHtml = `<span class="text-xs text-gray-400 ${gpsStaleClass} whitespace-nowrap">GPS: ${gpsAge}</span>`; 
+
 
             let locationLinkHtml = '';
             let contactDetailsHtml = '';
             let resolveButtonHtml = '';
             const isAlertStatus = worker['Alarm Status'] !== 'ON SITE';
+            
+             const callButtonHtml = worker['Worker Phone Number'] ? `<a href="tel:${worker['Worker Phone Number']}" title="Call ${worker['Worker Name']}" class="ml-2 inline-block bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block relative -top-px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> Call</a>` : '';
+
 
             if (isAlertStatus) {
                 let linkUrl = '#';
                 let linkTitle = 'Location not available';
-
-                if (worker['Last Known GPS']) {
-                    linkUrl = 'http://maps.google.com/?q=' + worker['Last Known GPS'];
-                    linkTitle = 'View last known GPS location';
-                } else if (worker['Location Address']) {
-                    linkUrl = 'http://maps.google.com/?q=' + encodeURIComponent(worker['Location Address']);
-                    linkTitle = 'View initial location address';
-                }
-
+                if (worker['Last Known GPS']) { linkUrl = 'http://maps.google.com/maps?q=' + worker['Last Known GPS']; linkTitle = 'View last known GPS location'; } 
+                else if (worker['Location Address']) { linkUrl = 'http://maps.google.com/maps?q=' + encodeURIComponent(worker['Location Address']); linkTitle = 'View initial location address'; }
+                
                 if(linkUrl !== '#') {
                     locationLinkHtml = '<a href="' + linkUrl + '" target="_blank" title="' + linkTitle + '" class="mt-1 inline-flex items-center text-sm text-blue-300 hover:text-blue-200"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>View Location</a>';
                 }
-
-                contactDetailsHtml = '<div class="mt-3 pt-2 border-t border-white/20 text-xs space-y-1">' +
-                    '<p>Worker: <a href="tel:' + worker['Worker Phone Number'] + '" class="text-blue-300 hover:text-blue-200">' + worker['Worker Phone Number'] + '</a></p>' +
-                    '<p>Contact: ' + worker['Emergency Contact Name'] + ' - <a href="tel:' + worker['Emergency Contact Number'] + '" class="text-blue-300 hover:text-blue-200">' + worker['Emergency Contact Number'] + '</a></p>' +
+                
+                contactDetailsHtml = '<div class="mt-3 pt-3 border-t border-white/20 text-xs space-y-1">' +
+                    '<p><strong class="text-gray-300">Worker:</strong> <a href="tel:' + worker['Worker Phone Number'] + '" class="text-blue-300 hover:text-blue-200">' + worker['Worker Phone Number'] + '</a>' + callButtonHtml + '</p>' +
+                    '<p><strong class="text-gray-300">Contact:</strong> ' + worker['Emergency Contact Name'] + ' - <a href="tel:' + worker['Emergency Contact Number'] + '" class="text-blue-300 hover:text-blue-200">' + worker['Emergency Contact Number'] + '</a></p>' +
                 '</div>';
 
                 resolveButtonHtml = '<button type="button" class="resolve-alert-btn mt-3 w-full bg-green-700 hover:bg-green-600 text-white font-bold py-1 px-3 rounded text-sm" data-name="' + worker['Worker Name'] + '" data-arrival="' + worker['Arrival Time'] + '">Manually Resolve Alert</button>';
+            } else {
+                 // Show call button even for non-alert status
+                 contactDetailsHtml = '<div class="mt-3 pt-3 border-t border-white/20 text-xs space-y-1">' +
+                    '<p><strong class="text-gray-300">Worker:</strong> <a href="tel:' + worker['Worker Phone Number'] + '" class="text-blue-300 hover:text-blue-200">' + worker['Worker Phone Number'] + '</a>' + callButtonHtml + '</p>' +
+                 '</div>';
             }
-
-            let lowBatteryIcon = '';
-            if (worker.Notes && worker.Notes.includes('LOW BATTERY')) {
-                lowBatteryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block text-red-400 ml-2 animate-pulse" title="Low Battery Warning Received"><path d="M11 7h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><path d="M19 12h1.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H19"/><path d="M4 12H2.5A1.5 1.5 0 0 0 1 13.5v1A1.5 1.5 0 0 0 2.5 16H4"/></svg>';
-            }
-
+            
+            
             const card = document.createElement('div');
-            card.className = 'p-4 rounded-lg shadow-md ' + bgColor + ' ' + textColor + ' border-2 ' + borderColor + ' ' + flashClass;
-
-            card.innerHTML = '<div class="flex justify-between items-start">' +
-                '<div class="flex-1 min-w-0">' +
-                    '<p class="font-bold text-xl truncate">' + worker['Worker Name'] + lowBatteryIcon + '</p>' +
-                    '<p class="text-sm truncate">' + worker['Location Name'] + '</p>' +
-                    locationLinkHtml +
-                '</div>' +
-                '<div class="text-right flex-shrink-0 ml-4">' +
-                    '<p class="font-semibold text-lg">' + worker['Alarm Status'].replace(/_/g, ' ') + '</p>' +
-                    '<p class="text-sm">Due: ' + anticipatedTime + '</p>' +
-                '</div>' +
-            '</div>' +
-            contactDetailsHtml + resolveButtonHtml;
-
+            card.className = 'p-4 rounded-lg shadow-md flex flex-col ' + bgColor + ' ' + textColor + ' border-2 ' + borderColor + ' ' + flashClass;
+            
+            card.innerHTML = `
+                <div class="flex-1 min-w-0">
+                     <div class="flex justify-between items-start mb-1">
+                         <p class="font-bold text-xl truncate pr-2">${worker['Worker Name']}${batteryHtml}</p>
+                         <div class="text-right flex-shrink-0">
+                             <p class="font-semibold text-lg">${worker['Alarm Status'].replace(/_/g, ' ')}</p>
+                             <p class="text-sm">Due: ${anticipatedTime}</p>
+                         </div>
+                     </div>
+                     <p class="text-sm truncate mb-1">${worker['Location Name']}</p>
+                     <div class="flex justify-between items-center text-xs">
+                         ${locationLinkHtml || '<div></div>'} {/* Use div to prevent layout shift */}
+                         ${gpsHtml}
+                    </div>
+                </div>
+                 ${contactDetailsHtml}
+                 ${resolveButtonHtml}
+            `;
+            
             workerList.appendChild(card);
         });
     }
+
 
     function checkForNewAlerts(workers) {
         const newStatuses = {};
         const criticalAlerts = ['ALERT SENT', 'EMERGENCY - PANIC BUTTON', 'DURESS_CODE_ACTIVATED', 'MISSED_CHECKIN'];
         const updateAlerts = ['EMAIL_1_SENT', 'EMAIL_2_SENT', 'EMAIL_3_SENT', 'ESCALATION_SENT'];
-
+        
         workers.forEach(worker => {
             const key = worker['Worker Name'] + '-' + worker['Arrival Time'];
             const oldStatus = lastKnownStatuses[key];
             const newStatus = worker['Alarm Status'];
-
+            
             newStatuses[key] = newStatus;
-
+            
             if (newStatus !== oldStatus) {
                 if (criticalAlerts.includes(newStatus) && !criticalAlerts.includes(oldStatus)) {
                     console.log("NEW CRITICAL ALERT:", worker);
@@ -387,10 +427,10 @@
                 }
             }
         });
-
+        
         lastKnownStatuses = newStatuses;
     }
-
+    
     function acknowledgeAlert() {
         stopAlarm();
         const arrivalTime = acknowledgeBtn.dataset.arrivalTime;
@@ -404,14 +444,17 @@
         for (const key in data) {
             formData.append(key, data[key]);
         }
-
-        fetch(LWS_CONFIG.sheetUrl, { // Use injected config
+        
+        fetch(sheetUrl, {
             method: 'POST',
             mode: 'no-cors',
             body: new URLSearchParams(formData)
-        }).then(() => console.log("Acknowledgement sent.")).catch(err => console.error("Failed to send ack:", err));
+        }).then(() => {
+             console.log("Acknowledgement sent.");
+             fetchData(); // Refresh data after acknowledging
+        }).catch(err => console.error("Failed to send ack:", err));
     }
-
+    
     function sendResolveAlert(workerName, arrivalTime) {
         const data = {
             "Arrival Time": arrivalTime,
@@ -423,8 +466,8 @@
         for (const key in data) {
             formData.append(key, data[key]);
         }
-
-        fetch(LWS_CONFIG.sheetUrl, { // Use injected config
+        
+        fetch(sheetUrl, {
             method: 'POST',
             mode: 'no-cors',
             body: new URLSearchParams(formData)
@@ -437,95 +480,56 @@
             showAlert("Error", "Could not send resolve alert. Check connection.");
         });
     }
-
-
+    
     function initEventListeners() {
         document.body.addEventListener('pointerdown', initAudio, { once: true });
-        
-        // These buttons might exist in the raw template but will be removed in generated file
-        if (saveUrlBtn) {
-            saveUrlBtn.addEventListener('click', () => { 
-                // This logic is now only relevant if using the template directly
-                const url = googleSheetUrlInput.value.trim(); 
-                const key = secretKeyInput.value.trim();
-                if (url && key) { 
-                    localStorage.setItem('lwsMonitorUrl', url); 
-                    localStorage.setItem('lwsMonitorKey', key);
-                    // Update global vars if needed, though they aren't used directly anymore
-                    LWS_CONFIG.sheetUrl = url; 
-                    LWS_CONFIG.secretKey = key;
-                    navigate('dashboard'); 
-                    fetchData(); 
-                    if (pollingInterval) clearInterval(pollingInterval);
-                    pollingInterval = setInterval(fetchData, 15000);
-                } else {
-                    showAlert("Missing Info", "Please provide both the Web App URL and the Secret Key.");
-                }
-            });
-        }
-        if (resetUrlBtn) {
-            resetUrlBtn.addEventListener('click', () => {
-                 // This logic is now only relevant if using the template directly
-                if (confirm("Are you sure you want to reset the stored URL and Secret Key?")) {
-                    localStorage.removeItem('lwsMonitorUrl');
-                    localStorage.removeItem('lwsMonitorKey');
-                    LWS_CONFIG.sheetUrl = ''; // Clear config
-                    LWS_CONFIG.secretKey = '';
-                    clearInterval(pollingInterval);
-                    navigate('setup');
-                    if (googleSheetUrlInput) googleSheetUrlInput.value = '';
-                    if (secretKeyInput) secretKeyInput.value = '';
-                }
-            });
-        }
-        
+                
         acknowledgeBtn.addEventListener('click', acknowledgeAlert);
-        if(closeWarningBtn) closeWarningBtn.addEventListener('click', () => sizeWarningBanner.classList.add('hidden'));
-        if(alertModalOkBtn) alertModalOkBtn.addEventListener('click', hideModals);
+        closeWarningBtn.addEventListener('click', () => sizeWarningBanner.classList.add('hidden'));
+        alertModalOkBtn.addEventListener('click', hideModals);
         
-        if (workerList) { // Check if workerList exists
-             workerList.addEventListener('click', (e) => {
-                const resolveBtn = e.target.closest('.resolve-alert-btn');
-                if (resolveBtn) {
-                    const workerName = resolveBtn.dataset.name;
-                    const arrivalTime = resolveBtn.dataset.arrival;
-                    showModal(resolveModal, () => {
-                        resolveWorkerName.textContent = workerName;
-                        resolveConfirmInput.value = '';
-                        confirmResolveBtn.dataset.name = workerName;
-                        confirmResolveBtn.dataset.arrival = arrivalTime;
-                        resolveConfirmInput.focus();
-                    });
-                }
-            });
-        }
-
-        if (cancelResolveBtn) cancelResolveBtn.addEventListener('click', hideModals);
-        
-        if (confirmResolveBtn) {
-            confirmResolveBtn.addEventListener('click', () => {
-                const expectedName = confirmResolveBtn.dataset.name;
-                const arrivalTime = confirmResolveBtn.dataset.arrival;
-                const typedName = resolveConfirmInput.value;
-                if (typedName.trim() === expectedName) {
-                    sendResolveAlert(expectedName, arrivalTime);
-                } else {
-                    showAlert("Incorrect Name", "The name you typed does not match. Alert not resolved.");
+        workerList.addEventListener('click', (e) => {
+            const resolveBtn = e.target.closest('.resolve-alert-btn');
+            if (resolveBtn) {
+                const workerName = resolveBtn.dataset.name;
+                const arrivalTime = resolveBtn.dataset.arrival;
+                showModal(resolveModal, () => {
+                    resolveWorkerName.textContent = workerName;
                     resolveConfirmInput.value = '';
+                    confirmResolveBtn.dataset.name = workerName;
+                    confirmResolveBtn.dataset.arrival = arrivalTime;
                     resolveConfirmInput.focus();
-                }
-            });
-        }
+                });
+            }
+            // Prevent tel: links from triggering card selection or other events
+            if (e.target.closest('a[href^="tel:"]')) {
+                e.stopPropagation();
+            }
+        });
+
+        cancelResolveBtn.addEventListener('click', hideModals);
+        
+        confirmResolveBtn.addEventListener('click', () => {
+            const expectedName = confirmResolveBtn.dataset.name;
+            const arrivalTime = confirmResolveBtn.dataset.arrival;
+            const typedName = resolveConfirmInput.value;
+            if (typedName.trim() === expectedName) {
+                sendResolveAlert(expectedName, arrivalTime);
+            } else {
+                showAlert("Incorrect Name", "The name you typed does not match. Alert not resolved.");
+                resolveConfirmInput.value = '';
+                resolveConfirmInput.focus();
+            }
+        });
     }
 
     function init() {
-        // Find elements that might exist
-        setupPage = document.getElementById('setupPage'); // Might be removed
+        setupPage = document.getElementById('setupPage');
         dashboardPage = document.getElementById('dashboardPage');
-        googleSheetUrlInput = document.getElementById('googleSheetUrl'); // Might be removed
-        secretKeyInput = document.getElementById('secretKey'); // Might be removed
-        saveUrlBtn = document.getElementById('saveUrlBtn'); // Might be removed
-        resetUrlBtn = document.getElementById('resetUrlBtn'); // Might be removed
+        googleSheetUrlInput = document.getElementById('googleSheetUrl');
+        secretKeyInput = document.getElementById('secretKey');
+        saveUrlBtn = document.getElementById('saveUrlBtn');
+        resetUrlBtn = document.getElementById('resetUrlBtn');
         workerList = document.getElementById('workerList');
         statusIndicator = document.getElementById('statusIndicator');
         lastUpdatedEl = document.getElementById('lastUpdated');
@@ -545,38 +549,27 @@
         cancelResolveBtn = document.getElementById('cancelResolveBtn');
         confirmResolveBtn = document.getElementById('confirmResolveBtn');
         
-        // --- ADJUSTED LOGIN LOGIC ---
-        // This block will be replaced by the setup tool in the final generated file.
-        // If run directly from template, it uses localStorage.
-        // If run from generated file, LWS_CONFIG will be populated and used.
-
-        let urlFromStorage = localStorage.getItem('lwsMonitorUrl');
-        let keyFromStorage = localStorage.getItem('lwsMonitorKey');
-
-        // Prefer injected config if available and valid
-        if (LWS_CONFIG && LWS_CONFIG.sheetUrl && LWS_CONFIG.sheetUrl.startsWith('http')) {
-             initEventListeners();
-             navigate('dashboard');
-             fetchData(); // fetchData now uses LWS_CONFIG
-             if (pollingInterval) clearInterval(pollingInterval);
-             pollingInterval = setInterval(fetchData, 15000);
-        } else if (urlFromStorage && keyFromStorage) {
-            // Fallback to localStorage (for using template directly)
-             LWS_CONFIG.sheetUrl = urlFromStorage; // Populate config for fetchData
-             LWS_CONFIG.secretKey = keyFromStorage;
-             if (googleSheetUrlInput) googleSheetUrlInput.value = urlFromStorage;
-             if (secretKeyInput) secretKeyInput.value = keyFromStorage;
-             initEventListeners();
-             navigate('dashboard');
-             fetchData();
-             if (pollingInterval) clearInterval(pollingInterval);
-             pollingInterval = setInterval(fetchData, 15000);
+        // --- MONITOR_LOGIN_LOGIC_START ---
+        // This block is replaced by the setup tool with hardcoded values and direct navigation
+        sheetUrl = localStorage.getItem('lwsMonitorUrl');
+        secretKey = localStorage.getItem('lwsMonitorKey');
+        
+        initEventListeners();
+        
+        if (sheetUrl && secretKey) {
+            if (googleSheetUrlInput) googleSheetUrlInput.value = sheetUrl;
+            if (secretKeyInput) secretKeyInput.value = secretKey;
+            navigate('dashboard');
+            fetchData();
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(fetchData, 15000);
         } else {
-             // Only show setup if no config and no storage
-             initEventListeners();
-             navigate('setup');
+             if (setupPage) navigate('setup'); // Only navigate if setup page exists
+             else { 
+                  document.body.innerHTML = '<div class="p-8 text-center text-red-400">Error: Monitor App not configured correctly. Please regenerate using the setup tool.</div>';
+             }
         }
-        // --- END ADJUSTED LOGIN LOGIC ---
+        // --- MONITOR_LOGIN_LOGIC_END ---
     }
     
     window.addEventListener('load', init);
