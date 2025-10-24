@@ -63,18 +63,15 @@
             <!-- Step 2: Google Sheet Setup -->
             <div id="step2" class="step">
                 <h2 class="text-xl font-semibold mb-4 text-blue-300">Step 2: Set Up Your Google Sheet</h2>
-                 <!-- === UPDATED INSTRUCTIONS === -->
                  <ol class="list-decimal list-inside text-gray-300 space-y-3 mb-6">
                     <li>Go to <a href="https://sheets.new" target="_blank" class="text-blue-400 hover:underline"><strong>sheets.new</strong></a> to create a new, blank Google Sheet.</li>
                     <li>Click the button below to copy the required spreadsheet <strong>headers</strong> (they will be copied with tabs between them).</li>
                     <li>In your new sheet, click <strong>once</strong> on cell <strong>A1</strong>.</li>
                     <li><strong>Paste</strong> the copied text. The headers should automatically fill row 1 from cell A1 to R1.</li>
                 </ol>
-                <!-- === END UPDATED INSTRUCTIONS === -->
                 <div class="relative bg-gray-900 rounded-lg p-4 font-mono text-sm text-gray-400 pr-16 mb-4">
-                    <!-- Changed ID -->
                     <button type="button" id="copyHeadersBtn" onclick="copyHeadersTabDelimited(this)" class="copy-btn">Copy</button>
-                    <!-- This PARAGRAPH is now just for visual reference -->
+                    {/* This PARAGRAPH is now just for visual reference */}
                     <p id="headersDisplayText" class="overflow-x-auto">Date,Worker Name,Worker Phone Number,Emergency Contact Name,Emergency Contact Number,Emergency Contact Email,Escalation Contact Name,Escalation Contact Number,Escalation Contact Email,Location Name,Location Address,Arrival Time,Anticipated Departure Time,Actual Departure Time,Alarm Status,Notes,Last Known GPS,GPS Timestamp</p>
                 </div>
                 <button type="button" onclick="nextStep()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg">Next Step</button>
@@ -200,7 +197,7 @@
                 'monitor_app_template.txt',
                 'manifest.json',
                 'sw.js',
-                'Administrator Setup Guide.md',
+                'Deployment_Admin_Guide.md', // Updated filename
                 'Installer Creation Guide.md',
                 'Promotional Blurb.md'
             ];
@@ -297,7 +294,6 @@
              console.error('Clipboard API not available.');
             return;
         }
-        // Use the globally defined tab-delimited string
         navigator.clipboard.writeText(headersTabDelimited).then(() => {
             button.innerText = 'Copied!';
             button.classList.add('copied');
@@ -312,7 +308,7 @@
     }
     // === END UPDATED FUNCTION ===
 
-    // Generic copy function remains for script copying
+    // Generic copy function remains for non-header text
     function copyToClipboard(elementId, button) { 
         const textEl = document.getElementById(elementId);
         if (!textEl || !navigator.clipboard) {
@@ -510,7 +506,7 @@
                  'manifest.json', 
                  'sw.js', 
                  'apps_script_template.txt', 
-                 'Administrator Setup Guide.md', 
+                 'Deployment_Admin_Guide.md', // Updated filename
                  'Installer Creation Guide.md', 
                  'Promotional Blurb.md'
             ];
@@ -575,13 +571,9 @@
             statusEl.innerText = 'Adding documentation...';
             const docFolder = zip.folder('Documentation');
             if (!docFolder) throw new Error("Could not create documentation folder in zip");
-            
-            let adminGuide = templates['Administrator Setup Guide.md'];
-            
-            adminGuide = adminGuide.replace(/find the line `var SECRET_KEY = "YOUR_SECRET_KEY_HERE";` and change it to a \*\*strong, private password\*\*\./, "Enter your desired **Secret Key** in the box provided. The tool will inject this for you.");
-            adminGuide = adminGuide.replace(/Paste the \*\*Web app URL\*\* .*? into the first box\.\s*\* Enter the \*\*Secret Key\*\* .*? into the second box\./s, "Paste the **Web app URL** (from the previous step) into the first box.\n* The **Secret Key** field will be auto-filled for you.");
              
-            docFolder.file('Administrator Setup Guide.md', adminGuide);
+            // Use the correct, renamed guide file from templates object
+            docFolder.file('Deployment_Admin_Guide.md', templates['Deployment_Admin_Guide.md']); 
             docFolder.file('Installer Creation Guide.md', templates['Installer Creation Guide.md']);
             docFolder.file('Promotional Blurb.md', templates['Promotional Blurb.md']);
 
@@ -613,4 +605,3 @@
 </script>
 </body>
 </html>
-
