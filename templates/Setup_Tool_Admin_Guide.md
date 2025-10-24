@@ -10,10 +10,8 @@
 
 Ensure you have the following files and folder structure ready on your computer:
 
-<img width="619" height="277" alt="image" src="https://github.com/user-attachments/assets/d998e9d8-f592-496b-9622-45080e1668f8" />
+<img width="375" height="277" alt="image" src="https://github.com/user-attachments/assets/5d83c27f-0007-4cd9-82fe-7a6100dd2a7a" />
 
-
-* **Rename:** Rename `templates/Administrator Setup Guide.md` to `templates/Deployment_Admin_Guide.md`.
 
 ### **2. Create a Free GitHub Account (If you don't have one)**
 
@@ -50,5 +48,6 @@ Ensure you have the following files and folder structure ready on your computer:
 * Share this URL with your Deployment Administrators.
 
 **Hosting Complete:** The setup tool is now live and ready for your administrators to use. They will follow the instructions provided *within* the tool (which uses the `Deployment_Admin_Guide.md` content).
+
 
 
