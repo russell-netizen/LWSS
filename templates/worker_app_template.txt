@@ -208,7 +208,7 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
     // --- END PLACEHOLDERS ---
 
     let synth, checkinCountdownInterval;
-    let lastBatteryReportTime = 0; // --- ADDED for periodic battery reporting ---
+    let lastBatteryReportTime = 0; 
 
     async function initAudio() { if (synth || (Tone.context && Tone.context.state === 'running')) return; try { await Tone.start(); synth = new Tone.Synth().toDestination(); console.log("Audio context started"); } catch (e) { console.error("Could not start audio context:", e); } }
     async function playSoundAndVibrate(action) {
@@ -321,7 +321,7 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
             method: 'POST',
             mode: 'no-cors',
             body: new URLSearchParams(formData)
-        }).then(() => console.log('Data sent to Google Sheet.'))
+        }).then(() => console.log('Data sent to Google Sheet:', data)) // Log sent data
           .catch(error => {
             console.error('Error sending data to Google Sheet:', error);
             showAlert("Network Error", "Failed to send data to Google Sheet. Please check your connection.");
@@ -394,7 +394,7 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
                 const level = Math.floor(battery.level * 100);
                  initialBatteryNote = `Battery: ${level}%`; // Send initial level
                  lastBatteryReportTime = Date.now();
-                if (level < 20 && !battery.charging) {
+                if (level < 20 && !battery.charging) { // Using 20% threshold for alert
                     showAlert("Low Battery", `Battery is at ${level}%. It may not last for the duration of this visit.`);
                     initialBatteryNote += " (LOW)"; // Add low flag if needed
                 }
@@ -433,7 +433,7 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
             "Arrival Time": state.activeVisit.arrivalTimeForSheet,
             "Anticipated Departure Time": anticipatedDepartureTime.toISOString(),
             "Alarm Status": 'ON SITE', 
-            "Notes": initialBatteryNote // Send initial battery level
+            "Notes": initialBatteryNote 
         });
         enterLockedScreen();
     }
@@ -516,7 +516,7 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
         document.getElementById('alertActiveContainer').classList.add('hidden');
         document.getElementById('normalButtonsContainer').classList.remove('hidden');
         if(synth) synth.volume.value = 0; 
-        lastBatteryReportTime = 0; // Reset battery report timer
+        lastBatteryReportTime = 0; 
     }
     function tryGetGps(notePrefix = "Overdue GPS") {
         if (!state.activeVisit) return; 
@@ -535,6 +535,7 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
             { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
         );
     }
+    
     // --- UPDATED tick FUNCTION ---
     async function tick() {
         if (!state.activeVisit) { clearInterval(visitInterval); visitInterval = null; return; }
@@ -586,28 +587,36 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
                 const battery = await navigator.getBattery();
                 const level = Math.floor(battery.level * 100);
                 let batteryNote = `Battery: ${level}%`;
+                let sendUpdate = false;
                 
                 // Only send LOW BATTERY note once per visit if it transitions to low
                 if (level < 15 && !battery.charging && !state.activeVisit.batteryAlertSent) {
                     batteryNote += " (LOW - WARNING)";
                     state.activeVisit.batteryAlertSent = true; // Mark warning as sent
+                    sendUpdate = true;
+                } else if (!state.activeVisit.batteryAlertSent) { 
+                    // Send regular update only if low warning hasn't been sent yet
+                    sendUpdate = true;
+                } // Don't send periodic updates if low warning already sent
+
+                if (sendUpdate) {
                      sendToGoogleSheet({ 
                         "Arrival Time": state.activeVisit.arrivalTimeForSheet, 
                         "Notes": batteryNote 
                     });
-                } else if (!state.activeVisit.batteryAlertSent) { 
-                     // Send regular update only if low warning hasn't been sent yet
-                      sendToGoogleSheet({ 
-                        "Arrival Time": state.activeVisit.arrivalTimeForSheet, 
-                        "Notes": batteryNote 
-                    });
                 }
-                saveState(); // Save state if batteryAlertSent was updated
+                
+                // Save state only if batteryAlertSent changed
+                if (level < 15 && !battery.charging && !state.activeVisit.batteryAlertSent) {
+                     saveState(); 
+                }
+
             } catch(e) { console.warn("Could not check battery:", e); }
         }
         // --- End Battery Check Logic ---
         
-        saveState(); // Save state potentially updated by battery check
+        // Save state only if potentially updated by battery check
+        // saveState(); // This saveState call might be redundant if battery didn't change status
     }
     // --- END UPDATED tick ---
 
@@ -945,13 +954,12 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
             });
         } 
         loadState(); 
-        updateArrivedButtonState(); // Ensure button text is correct on initial load
+        updateArrivedButtonState(); 
         if (state.activeVisit) {
             enterLockedScreen();
         } else {
             navigate('main');
             renderLocations();
-            // updateArrivedButtonState(); // Already called above
         } 
         initEventListeners(); 
         Object.keys(pages).forEach(key => { if (pages[key] && !pages[key].classList.contains('active')) { pages[key].classList.add('hidden'); } });
@@ -960,3 +968,4 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
     </script>
 </body>
 </html>
+
