@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
@@ -13,11 +13,16 @@
         @keyframes flash-purple { 0%, 100% { background-color: #5b21b6; } 50% { background-color: #a78bfa; } }
         .flashing-alert { animation: flash-red 1s infinite; }
         .flashing-duress { animation: flash-purple 1s infinite; }
-        /* Style for stale GPS warning */
-        .gps-stale { color: #facc15; /* yellow-400 */ font-weight: 600; } 
+        .gps-stale { color: #facc15; font-weight: 600; }
+        /* Style for Pre-Alert Overdue */
+        .border-pre-alert { border-color: #f59e0b; /* amber-500 */ } 
+        /* Log panel styling */
+        #logPanel { max-height: 150px; }
+        #logPanel p { margin-bottom: 0.25rem; border-bottom: 1px solid #374151; /* gray-700 */ padding-bottom: 0.25rem; }
+        #logPanel p:last-child { border-bottom: none; }
     </style>
 </head>
-<body class="bg-gray-800 text-white h-full overflow-hidden">
+<body class="bg-gray-800 text-white h-full overflow-hidden flex flex-col">
 
 <!-- SETUP_PAGE_START -->
 <div id="setupPage" class="h-full flex items-center justify-center p-4 bg-gray-900">
@@ -29,13 +34,17 @@
     <header class="flex-shrink-0 bg-gray-900 shadow-lg z-10" style="-webkit-app-region: drag">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                {/* --- ADDED LOGO --- */}
                 <div class="flex items-center">
                     <img src="%%LOGO_URL%%" alt="Logo" class="h-8 w-8 mr-3 rounded" onerror="this.style.display='none'"> 
                     <h1 class="text-2xl font-bold text-blue-400">Lone Worker Monitor</h1>
                 </div>
-                {/* --- END LOGO --- */}
                 <div class="flex items-center space-x-2">
+                    {/* --- Notification Button --- */}
+                    <button type="button" id="enableNotificationsBtn" title="Enable Desktop Notifications" class="p-2 rounded-full hover:bg-gray-700 hidden">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    </button>
+                    <span id="notificationStatus" class="text-xs text-gray-500"></span> 
+                    {/* --- End Notification Button --- */}
                     <span id="statusIndicator" class="h-3 w-3 rounded-full bg-gray-500" title="Connection Status"></span>
                     <span id="lastUpdated" class="text-sm text-gray-500"></span>
                     <!-- RESET_BUTTON_START -->
@@ -44,6 +53,16 @@
                 </div>
             </div>
         </div>
+         {/* --- Session Log Area --- */}
+        <div class="bg-gray-700 px-4 py-2 border-t border-gray-600">
+             <details>
+                 <summary class="cursor-pointer text-xs text-gray-400 hover:text-white">Session Event Log</summary>
+                 <div id="logPanel" class="mt-2 text-xs text-gray-300 overflow-y-auto bg-gray-800 p-2 rounded max-h-[150px]">
+                     <p>Session started.</p>
+                 </div>
+             </details>
+        </div>
+         {/* --- End Session Log Area --- */}
     </header>
     <main class="flex-1 overflow-y-auto p-4">
         <div id="sizeWarningBanner" class="hidden bg-yellow-600 text-white p-3 rounded-lg mb-4 flex justify-between items-center">
@@ -83,12 +102,19 @@
 
 <script>
     let setupPage, dashboardPage, googleSheetUrlInput, saveUrlBtn, resetUrlBtn, workerList, statusIndicator, lastUpdatedEl, alertOverlay, alertDetails, acknowledgeBtn, modalBackdrop, alertModal, alertModalTitle, alertModalMessage, alertModalOkBtn, secretKeyInput, sizeWarningBanner, closeWarningBtn, resolveModal, resolveWorkerName, resolveConfirmInput, cancelResolveBtn, confirmResolveBtn;
+    // --- NEW Elements ---
+    let logPanel, enableNotificationsBtn, notificationStatus; 
     let sheetUrl = '';
     let secretKey = '';
     let pollingInterval;
     let lastKnownStatuses = {};
     let alarm;
     let updateChime;
+    // --- NEW State Variables ---
+    const sessionLogHistory = []; // Array to hold log messages
+    const MAX_LOG_ENTRIES = 50; // Max number of log entries to keep
+    let notificationPermission = 'default'; // 'default', 'granted', 'denied'
+
 
     function navigate(page) {
         if (page === 'setup') {
@@ -192,7 +218,7 @@
         
         const script = document.createElement('script');
         const callbackName = 'jsonp_callback_' + Date.now();
-        let timer; // Timeout timer
+        let timer; 
 
         const cleanupJsonp = () => {
              clearTimeout(timer);
@@ -222,7 +248,7 @@
                 if (data.length >= 2500) {
                     sizeWarningBanner.classList.remove('hidden');
                 } else {
-                    sizeWarningBanner.classList.add('hidden'); // Hide if below limit
+                    sizeWarningBanner.classList.add('hidden'); 
                 }
                 processData(data);
             } else {
@@ -276,19 +302,17 @@
         activeWorkers.sort((a,b) => (statusPriority[a['Alarm Status']] || 99) - (statusPriority[b['Alarm Status']] || 99) || a['Worker Name'].localeCompare(b['Worker Name']));
         
         renderWorkers(activeWorkers);
-        checkForNewAlerts(activeWorkers);
+        checkForNewAlerts(activeWorkers); // Check after rendering
     }
 
     function formatTimeAgo(timestamp) {
         if (!timestamp) return 'Never';
         const now = Date.now();
         const past = new Date(timestamp).getTime();
-         // Check for invalid date
         if (isNaN(past)) return 'Invalid Date'; 
 
         const diffSeconds = Math.round((now - past) / 1000);
         
-        // Handle future timestamps slightly (clock skew)
         if (diffSeconds < 0) return 'Just now'; 
 
         const diffMinutes = Math.round(diffSeconds / 60);
@@ -300,6 +324,7 @@
         return `> ${Math.floor(diffHours / 24)}d ago`;
     }
     
+    // --- UPDATED renderWorkers ---
     function renderWorkers(workers) {
         workerList.innerHTML = '';
         if (workers.length === 0) {
@@ -307,24 +332,40 @@
             return;
         }
         
+        const now = new Date(); // Get current time once for efficiency
+
         workers.forEach(worker => {
             let bgColor, textColor, borderColor, flashClass = '';
-            
+            let isPreAlertOverdue = false; // --- NEW Flag ---
+
+            const anticipatedTimeDT = new Date(worker['Anticipated Departure Time']);
+             // --- NEW: Check for Pre-Alert Overdue ---
+             if (worker['Alarm Status'] === 'ON SITE' && now > anticipatedTimeDT) {
+                  isPreAlertOverdue = true;
+                  borderColor = 'border-amber-500'; // Amber border for pre-alert
+                  textColor = 'text-amber-100'; // Slightly lighter text
+             }
+
+            // Status colors override pre-alert border if needed
             switch(worker['Alarm Status']) {
                 case 'DURESS_CODE_ACTIVATED': bgColor = 'bg-purple-800'; textColor = 'text-white'; borderColor = 'border-purple-400'; flashClass = 'flashing-duress'; break;
                 case 'EMERGENCY - PANIC BUTTON': bgColor = 'bg-red-700'; textColor = 'text-white'; borderColor = 'border-red-400'; flashClass = 'flashing-alert'; break;
                 case 'ESCALATION_SENT':
                 case 'EMAIL_3_SENT': case 'EMAIL_2_SENT': case 'EMAIL_1_SENT':
                 case 'ALERT SENT': case 'MISSED_CHECKIN': bgColor = 'bg-yellow-700'; textColor = 'text-white'; borderColor = 'border-yellow-400'; break;
-                default: bgColor = 'bg-gray-700'; textColor = 'text-gray-300'; borderColor = 'border-transparent';
+                default: // ON SITE (unless pre-alert)
+                     if (!isPreAlertOverdue) {
+                         bgColor = 'bg-gray-700'; textColor = 'text-gray-300'; borderColor = 'border-transparent';
+                     } else {
+                         bgColor = 'bg-gray-700'; // Keep base color gray
+                     }
             }
             
-            const anticipatedTime = new Date(worker['Anticipated Departure Time']).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const anticipatedTimeStr = anticipatedTimeDT.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             
             let batteryLevel = null;
             let batteryColor = 'text-gray-400'; 
             const notes = worker.Notes || '';
-            // Match "Battery: XX%" pattern, potentially followed by other text like " (LOW)"
             const batteryMatch = notes.match(/Battery: (\d+)%/); 
             if (batteryMatch && batteryMatch[1]) {
                  batteryLevel = parseInt(batteryMatch[1], 10);
@@ -334,14 +375,14 @@
             }
              const batteryHtml = batteryLevel !== null 
                 ? `<span class="text-xs ${batteryColor} ml-2 whitespace-nowrap">(<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="inline-block relative -top-px"><path d="M18.5 7H22v10H18.5l-2.5-5zM4 17V7h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4z"></path></svg>${batteryLevel}%)</span>` 
-                : '<span class="text-xs text-gray-500 ml-2 whitespace-nowrap">(Batt: N/A)</span>'; // Show N/A if no match
+                : '<span class="text-xs text-gray-500 ml-2 whitespace-nowrap">(Batt: N/A)</span>'; 
 
             const gpsTimestamp = worker['GPS Timestamp'];
             const gpsAge = formatTimeAgo(gpsTimestamp);
             let gpsStaleClass = '';
             const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
             if (worker['Location Name'] === 'Travelling' && (!gpsTimestamp || new Date(gpsTimestamp).getTime() < thirtyMinutesAgo)) {
-                 gpsStaleClass = 'gps-stale'; // Apply yellow warning color
+                 gpsStaleClass = 'gps-stale'; 
             }
              const gpsHtml = `<span class="text-xs text-gray-400 ${gpsStaleClass} whitespace-nowrap">GPS: ${gpsAge}</span>`; 
 
@@ -371,7 +412,6 @@
 
                 resolveButtonHtml = '<button type="button" class="resolve-alert-btn mt-3 w-full bg-green-700 hover:bg-green-600 text-white font-bold py-1 px-3 rounded text-sm" data-name="' + worker['Worker Name'] + '" data-arrival="' + worker['Arrival Time'] + '">Manually Resolve Alert</button>';
             } else {
-                 // Show call button even for non-alert status
                  contactDetailsHtml = '<div class="mt-3 pt-3 border-t border-white/20 text-xs space-y-1">' +
                     '<p><strong class="text-gray-300">Worker:</strong> <a href="tel:' + worker['Worker Phone Number'] + '" class="text-blue-300 hover:text-blue-200">' + worker['Worker Phone Number'] + '</a>' + callButtonHtml + '</p>' +
                  '</div>';
@@ -379,20 +419,22 @@
             
             
             const card = document.createElement('div');
-            card.className = 'p-4 rounded-lg shadow-md flex flex-col ' + bgColor + ' ' + textColor + ' border-2 ' + borderColor + ' ' + flashClass;
+             // Added border-pre-alert class conditionally
+            card.className = `p-4 rounded-lg shadow-md flex flex-col ${bgColor} ${textColor} border-2 ${borderColor} ${flashClass} ${isPreAlertOverdue ? 'border-pre-alert' : ''}`;
             
             card.innerHTML = `
                 <div class="flex-1 min-w-0">
                      <div class="flex justify-between items-start mb-1">
                          <p class="font-bold text-xl truncate pr-2">${worker['Worker Name']}${batteryHtml}</p>
                          <div class="text-right flex-shrink-0">
-                             <p class="font-semibold text-lg">${worker['Alarm Status'].replace(/_/g, ' ')}</p>
-                             <p class="text-sm">Due: ${anticipatedTime}</p>
+                              {/* --- NEW: Added Overdue badge --- */}
+                             <p class="font-semibold text-lg">${isPreAlertOverdue ? '<span class="text-xs bg-amber-600 px-1.5 py-0.5 rounded mr-1">OVERDUE</span>' : ''}${worker['Alarm Status'].replace(/_/g, ' ')}</p>
+                             <p class="text-sm">Due: ${anticipatedTimeStr}</p>
                          </div>
                      </div>
                      <p class="text-sm truncate mb-1">${worker['Location Name']}</p>
                      <div class="flex justify-between items-center text-xs">
-                         ${locationLinkHtml || '<div></div>'} {/* Use div to prevent layout shift */}
+                         ${locationLinkHtml || '<div></div>'} 
                          ${gpsHtml}
                     </div>
                 </div>
@@ -403,59 +445,165 @@
             workerList.appendChild(card);
         });
     }
+     // --- END UPDATED renderWorkers ---
 
 
-    function checkForNewAlerts(workers) {
-        const newStatuses = {};
-        const criticalAlerts = ['ALERT SENT', 'EMERGENCY - PANIC BUTTON', 'DURESS_CODE_ACTIVATED', 'MISSED_CHECKIN'];
-        const updateAlerts = ['EMAIL_1_SENT', 'EMAIL_2_SENT', 'EMAIL_3_SENT', 'ESCALATION_SENT'];
+    // --- NEW: Session Log Function ---
+    function addLogEntry(message) {
+        const now = new Date();
+        const timestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const logEntry = { timestamp, message };
+
+        sessionLogHistory.unshift(logEntry); // Add to beginning
+        if (sessionLogHistory.length > MAX_LOG_ENTRIES) {
+            sessionLogHistory.pop(); // Remove oldest if limit exceeded
+        }
+
+        // Update UI
+        if (logPanel) {
+            const entryElement = document.createElement('p');
+            entryElement.innerHTML = `<span class="text-gray-500">${timestamp}:</span> ${message}`;
+            logPanel.prepend(entryElement); // Add new entry at the top
+            // Trim excess log entries from UI
+            while (logPanel.children.length > MAX_LOG_ENTRIES) {
+                logPanel.removeChild(logPanel.lastChild);
+            }
+        }
+    }
+    // --- END Session Log ---
+
+    // --- NEW: Notification Functions ---
+    function checkNotificationPermission() {
+        if (!('Notification' in window)) {
+            console.warn("Browser does not support desktop notifications.");
+            notificationStatus.textContent = 'N/A';
+            return;
+        }
+        notificationPermission = Notification.permission;
+        if (notificationPermission === 'granted') {
+             notificationStatus.textContent = 'Enabled';
+             enableNotificationsBtn.classList.add('hidden'); // Hide button if already enabled
+        } else if (notificationPermission === 'denied') {
+             notificationStatus.textContent = 'Blocked';
+             enableNotificationsBtn.classList.add('hidden'); // Hide button if blocked
+        } else {
+             notificationStatus.textContent = 'Disabled';
+             enableNotificationsBtn.classList.remove('hidden'); // Show button to enable
+        }
+    }
+
+    function requestNotificationPermission() {
+         if (!('Notification' in window)) return;
+         Notification.requestPermission().then(permission => {
+             notificationPermission = permission;
+             checkNotificationPermission(); // Update UI
+             if (permission === 'granted') {
+                 addLogEntry("Desktop notifications enabled.");
+                 // Show a test notification
+                 new Notification("LWS Monitor", { body: "Desktop notifications are now enabled!" });
+             } else {
+                 addLogEntry("Desktop notification permission denied.");
+             }
+         });
+    }
+
+    function showNotification(workerName, status) {
+        if (notificationPermission !== 'granted') return;
         
+        const title = `LWS ALERT: ${workerName}`;
+        const options = {
+            body: `Status changed to: ${status.replace(/_/g, ' ')}\nLocation: ${lastKnownStatuses[workerName] ? lastKnownStatuses[workerName].location : 'N/A'}`, // Include location if known
+            icon: '%%LOGO_URL%%', // Use the configured logo
+            tag: `lws-alert-${workerName}` // Use a tag to prevent multiple notifications for the same worker if rapid changes occur
+        };
+
+        const notification = new Notification(title, options);
+        // Optional: Close notification after some time
+        setTimeout(notification.close.bind(notification), 15000); // Close after 15 seconds
+    }
+    // --- END Notification Functions ---
+
+
+    // --- UPDATED checkForNewAlerts ---
+    function checkForNewAlerts(workers) {
+        const currentActiveKeys = new Set();
+        const now = new Date(); // For logging time
+
         workers.forEach(worker => {
             const key = worker['Worker Name'] + '-' + worker['Arrival Time'];
-            const oldStatus = lastKnownStatuses[key];
+            currentActiveKeys.add(key); // Track currently active workers
+            const oldStatus = lastKnownStatuses[key] ? lastKnownStatuses[key].status : null;
             const newStatus = worker['Alarm Status'];
             
-            newStatuses[key] = newStatus;
-            
+            // Log new worker appearance
+            if (!oldStatus) {
+                 addLogEntry(`Worker active: ${worker['Worker Name']} at ${worker['Location Name']}.`);
+            }
+
+            // Update last known status object
+             lastKnownStatuses[key] = {
+                 status: newStatus,
+                 location: worker['Location Name'] // Store location for notifications
+             }; 
+
             if (newStatus !== oldStatus) {
-                if (criticalAlerts.includes(newStatus) && !criticalAlerts.includes(oldStatus)) {
+                // Log status change
+                 addLogEntry(`Status change for ${worker['Worker Name']}: ${oldStatus || 'None'} -> ${newStatus}.`);
+
+                const criticalAlerts = ['ALERT SENT', 'EMERGENCY - PANIC BUTTON', 'DURESS_CODE_ACTIVATED', 'MISSED_CHECKIN'];
+                const updateAlerts = ['EMAIL_1_SENT', 'EMAIL_2_SENT', 'EMAIL_3_SENT', 'ESCALATION_SENT'];
+        
+                // Trigger loud alarm and notification only for the *first* critical alert
+                if (criticalAlerts.includes(newStatus) && (!oldStatus || !criticalAlerts.includes(oldStatus))) {
                     console.log("NEW CRITICAL ALERT:", worker);
                     playAlarm(worker);
+                    showNotification(worker['Worker Name'], newStatus); // Show desktop notification
                 } else if (updateAlerts.includes(newStatus)) {
                     console.log("ALERT STATUS UPDATE:", worker);
                     playUpdateSound();
                 }
             }
         });
-        
-        lastKnownStatuses = newStatuses;
+
+         // Log workers who have disappeared (resolved/departed)
+         Object.keys(lastKnownStatuses).forEach(key => {
+             if (!currentActiveKeys.has(key)) {
+                 const workerName = key.split('-')[0]; // Extract name
+                 addLogEntry(`Worker resolved/departed: ${workerName}.`);
+                 delete lastKnownStatuses[key]; // Clean up old status
+             }
+         });
     }
+     // --- END UPDATED checkForNewAlerts ---
+
     
+    // --- UPDATED acknowledgeAlert ---
     function acknowledgeAlert() {
-        stopAlarm();
         const arrivalTime = acknowledgeBtn.dataset.arrivalTime;
         const workerName = acknowledgeBtn.dataset.workerName;
+        stopAlarm(); // Stop sound first
+        addLogEntry(`Alert acknowledged for ${workerName}.`); // Log acknowledgment
+
         const data = {
             "Arrival Time": arrivalTime,
             "Worker Name": workerName,
             Notes: 'Alert acknowledged by monitor at ' + new Date().toISOString()
         };
         const formData = new FormData();
-        for (const key in data) {
-            formData.append(key, data[key]);
-        }
+        for (const key in data) { formData.append(key, data[key]); }
         
         fetch(sheetUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: new URLSearchParams(formData)
+            method: 'POST', mode: 'no-cors', body: new URLSearchParams(formData)
         }).then(() => {
              console.log("Acknowledgement sent.");
-             fetchData(); // Refresh data after acknowledging
+             fetchData(); 
         }).catch(err => console.error("Failed to send ack:", err));
     }
-    
+    // --- END UPDATED acknowledgeAlert ---
+
+    // --- UPDATED sendResolveAlert ---
     function sendResolveAlert(workerName, arrivalTime) {
+        addLogEntry(`Manual resolve initiated for ${workerName}.`); // Log action
         const data = {
             "Arrival Time": arrivalTime,
             "Worker Name": workerName,
@@ -463,30 +611,30 @@
             "Notes": 'Alert manually resolved by monitor at ' + new Date().toISOString()
         };
         const formData = new FormData();
-        for (const key in data) {
-            formData.append(key, data[key]);
-        }
+        for (const key in data) { formData.append(key, data[key]); }
         
         fetch(sheetUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: new URLSearchParams(formData)
+            method: 'POST', mode: 'no-cors', body: new URLSearchParams(formData)
         }).then(() => {
             console.log("Resolve alert sent.");
+            addLogEntry(`Manual resolve confirmed for ${workerName}.`); // Log confirmation
             hideModals();
             fetchData();
         }).catch(err => {
             console.error("Failed to send resolve alert:", err);
+             addLogEntry(`Manual resolve failed for ${workerName}: ${err}`); // Log failure
             showAlert("Error", "Could not send resolve alert. Check connection.");
         });
     }
+    // --- END UPDATED sendResolveAlert ---
     
     function initEventListeners() {
         document.body.addEventListener('pointerdown', initAudio, { once: true });
-                
+        
         acknowledgeBtn.addEventListener('click', acknowledgeAlert);
         closeWarningBtn.addEventListener('click', () => sizeWarningBanner.classList.add('hidden'));
         alertModalOkBtn.addEventListener('click', hideModals);
+        enableNotificationsBtn.addEventListener('click', requestNotificationPermission); // Add listener
         
         workerList.addEventListener('click', (e) => {
             const resolveBtn = e.target.closest('.resolve-alert-btn');
@@ -501,10 +649,7 @@
                     resolveConfirmInput.focus();
                 });
             }
-            // Prevent tel: links from triggering card selection or other events
-            if (e.target.closest('a[href^="tel:"]')) {
-                e.stopPropagation();
-            }
+            if (e.target.closest('a[href^="tel:"]')) { e.stopPropagation(); }
         });
 
         cancelResolveBtn.addEventListener('click', hideModals);
@@ -524,6 +669,7 @@
     }
 
     function init() {
+        // Find existing elements
         setupPage = document.getElementById('setupPage');
         dashboardPage = document.getElementById('dashboardPage');
         googleSheetUrlInput = document.getElementById('googleSheetUrl');
@@ -548,13 +694,19 @@
         resolveConfirmInput = document.getElementById('resolveConfirmInput');
         cancelResolveBtn = document.getElementById('cancelResolveBtn');
         confirmResolveBtn = document.getElementById('confirmResolveBtn');
+        // --- Find NEW Elements ---
+        logPanel = document.getElementById('logPanel');
+        enableNotificationsBtn = document.getElementById('enableNotificationsBtn');
+        notificationStatus = document.getElementById('notificationStatus');
         
         // --- MONITOR_LOGIN_LOGIC_START ---
-        // This block is replaced by the setup tool with hardcoded values and direct navigation
+        // This block is replaced by the setup tool
         sheetUrl = localStorage.getItem('lwsMonitorUrl');
         secretKey = localStorage.getItem('lwsMonitorKey');
         
         initEventListeners();
+        checkNotificationPermission(); // Check permission status on load
+        addLogEntry("Monitor session started."); // Initial log entry
         
         if (sheetUrl && secretKey) {
             if (googleSheetUrlInput) googleSheetUrlInput.value = sheetUrl;
@@ -564,7 +716,7 @@
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(fetchData, 15000);
         } else {
-             if (setupPage) navigate('setup'); // Only navigate if setup page exists
+             if (setupPage) navigate('setup'); 
              else { 
                   document.body.innerHTML = '<div class="p-8 text-center text-red-400">Error: Monitor App not configured correctly. Please regenerate using the setup tool.</div>';
              }
@@ -576,3 +728,4 @@
 </script>
 </body>
 </html>
+
