@@ -65,14 +65,14 @@
                 <h2 class="text-xl font-semibold mb-4 text-blue-300">Step 2: Set Up Your Google Sheet</h2>
                  <ol class="list-decimal list-inside text-gray-300 space-y-3 mb-6">
                     <li>Go to <a href="https://sheets.new" target="_blank" class="text-blue-400 hover:underline"><strong>sheets.new</strong></a> to create a new, blank Google Sheet.</li>
-                    <li>Click the button below to copy the required spreadsheet <strong>headers</strong> (they will be copied with tabs between them).</li>
+                    <li>Click the button below to copy the required spreadsheet <strong>headers</strong> (they will be copied with tabs between them). Remember to add the `Battery Level` header to column S if you haven't already.</li>
                     <li>In your new sheet, click <strong>once</strong> on cell <strong>A1</strong>.</li>
-                    <li><strong>Paste</strong> the copied text. The headers should automatically fill row 1 from cell A1 to R1.</li>
+                    <li><strong>Paste</strong> the copied text. The headers should automatically fill row 1 from cell A1 to S1.</li>
                 </ol>
                 <div class="relative bg-gray-900 rounded-lg p-4 font-mono text-sm text-gray-400 pr-16 mb-4">
                     <button type="button" id="copyHeadersBtn" onclick="copyHeadersTabDelimited(this)" class="copy-btn">Copy</button>
-                    {/* This PARAGRAPH is now just for visual reference */}
-                    <p id="headersDisplayText" class="overflow-x-auto">Date,Worker Name,Worker Phone Number,Emergency Contact Name,Emergency Contact Number,Emergency Contact Email,Escalation Contact Name,Escalation Contact Number,Escalation Contact Email,Location Name,Location Address,Arrival Time,Anticipated Departure Time,Actual Departure Time,Alarm Status,Notes,Last Known GPS,GPS Timestamp</p>
+                    {/* Display text shows commas, but copied text uses tabs */}
+                    <p id="headersDisplayText" class="overflow-x-auto">Date,Worker Name,Worker Phone Number,Emergency Contact Name,Emergency Contact Number,Emergency Contact Email,Escalation Contact Name,Escalation Contact Number,Escalation Contact Email,Location Name,Location Address,Arrival Time,Anticipated Departure Time,Actual Departure Time,Alarm Status,Notes,Last Known GPS,GPS Timestamp,Battery Level</p>
                 </div>
                 <button type="button" onclick="nextStep()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg">Next Step</button>
             </div>
@@ -149,7 +149,7 @@
                      <div>
                         <label for="logoUrl" class="block text-sm font-medium text-gray-300">Company Logo URL (Optional)</label>
                         <input type="url" id="logoUrl" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="https://your-logo.com/image.png">
-                        <p class="text-xs text-gray-400 mt-1">If provided, this will replace the default icon for the Worker PWA.</p>
+                        <p class="text-xs text-gray-400 mt-1">If provided, this will replace the default icon for the Worker PWA and appear in the Monitor App header.</p> {/* Updated text */}
                     </div>
                 </div>
                 <button type="button" onclick="testAndProceed()" class="mt-8 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg">Test Connection & Proceed</button>
@@ -173,8 +173,8 @@
     const config = {
         secretKey: ""
     };
-    // === Define headers text with tabs ===
-    const headersTabDelimited = "Date\tWorker Name\tWorker Phone Number\tEmergency Contact Name\tEmergency Contact Number\tEmergency Contact Email\tEscalation Contact Name\tEscalation Contact Number\tEscalation Contact Email\tLocation Name\tLocation Address\tArrival Time\tAnticipated Departure Time\tActual Departure Time\tAlarm Status\tNotes\tLast Known GPS\tGPS Timestamp";
+    // Updated headers text with tabs AND Battery Level
+    const headersTabDelimited = "Date\tWorker Name\tWorker Phone Number\tEmergency Contact Name\tEmergency Contact Number\tEmergency Contact Email\tEscalation Contact Name\tEscalation Contact Number\tEscalation Contact Email\tLocation Name\tLocation Address\tArrival Time\tAnticipated Departure Time\tActual Departure Time\tAlarm Status\tNotes\tLast Known GPS\tGPS Timestamp\tBattery Level";
 
     // --- Template Fetching ---
     window.onload = async () => {
@@ -287,7 +287,6 @@
     }
 
     // --- Utilities ---
-    // === UPDATED FUNCTION to copy TAB delimited headers ===
     function copyHeadersTabDelimited(button) {
          if (!navigator.clipboard) {
             alert('Clipboard API not available.');
@@ -306,9 +305,7 @@
             console.error('Clipboard copy failed:', err);
         });
     }
-    // === END UPDATED FUNCTION ===
 
-    // Generic copy function remains for non-header text
     function copyToClipboard(elementId, button) { 
         const textEl = document.getElementById(elementId);
         if (!textEl || !navigator.clipboard) {
@@ -506,7 +503,7 @@
                  'manifest.json', 
                  'sw.js', 
                  'apps_script_template.txt', 
-                 'Deployment_Admin_Guide.md', // Updated filename
+                 'Deployment_Admin_Guide.md', 
                  'Installer Creation Guide.md', 
                  'Promotional Blurb.md'
             ];
@@ -539,6 +536,10 @@
             statusEl.innerText = 'Processing Monitor App...';
             let monitorApp = templates['monitor_app_template.txt'];
             
+            // Inject Logo URL
+            monitorApp = monitorApp.replace(/%%LOGO_URL%%/g, logoUrl); 
+
+            // Remove setup page/logic
             monitorApp = monitorApp.replace(/<!-- SETUP_PAGE_START -->.*?<!-- SETUP_PAGE_END -->/s, '');
             monitorApp = monitorApp.replace(/<!-- RESET_BUTTON_START -->.*?<!-- RESET_BUTTON_END -->/s, '');
             monitorApp = monitorApp.replace('<div id="dashboardPage" class="h-full flex-col hidden">', '<div id="dashboardPage" class="h-full flex flex-col">');
@@ -572,7 +573,6 @@
             const docFolder = zip.folder('Documentation');
             if (!docFolder) throw new Error("Could not create documentation folder in zip");
              
-            // Use the correct, renamed guide file from templates object
             docFolder.file('Deployment_Admin_Guide.md', templates['Deployment_Admin_Guide.md']); 
             docFolder.file('Installer Creation Guide.md', templates['Installer Creation Guide.md']);
             docFolder.file('Promotional Blurb.md', templates['Promotional Blurb.md']);
