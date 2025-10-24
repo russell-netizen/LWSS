@@ -10,17 +10,8 @@
 
 Ensure you have the following files and folder structure ready on your computer:
 
-/ (Your Project Folder)
-├── setup.html
-│ 
-└── templates/
-    ├── Administrator Setup Guide.md <-- This will be renamed 
-    ├── Installer Creation Guide.md 
-    ├── Promotional Blurb.md 
-    ├── apps_script_template.txt 
-    ├── manifest.json 
-    ├── monitor_app_template.txt 
-    ├── sw.js └── worker_app_template.txt
+<img width="619" height="277" alt="image" src="https://github.com/user-attachments/assets/d998e9d8-f592-496b-9622-45080e1668f8" />
+
 
 * **Rename:** Rename `templates/Administrator Setup Guide.md` to `templates/Deployment_Admin_Guide.md`.
 
@@ -59,4 +50,5 @@ Ensure you have the following files and folder structure ready on your computer:
 * Share this URL with your Deployment Administrators.
 
 **Hosting Complete:** The setup tool is now live and ready for your administrators to use. They will follow the instructions provided *within* the tool (which uses the `Deployment_Admin_Guide.md` content).
+
 
