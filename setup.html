@@ -64,15 +64,15 @@
             <div id="step2" class="step">
                 <h2 class="text-xl font-semibold mb-4 text-blue-300">Step 2: Set Up Your Google Sheet</h2>
                  <ol class="list-decimal list-inside text-gray-300 space-y-3 mb-6">
-                    <li>Go to <a href="https://sheets.new" target="_blank" class="text-blue-400 hover:underline"><strong>sheets.new</strong></a> to create a new, blank Google Sheet.</li>
-                    <li>Click the button below to copy the required spreadsheet <strong>headers</strong> (they will be copied with tabs between them). Remember to add the `Battery Level` header to column S if you haven't already.</li>
+                    <li>Go to <a href="https://sheets.new" target="_blank" class="text-blue-400 hover:underline"><strong>sheets.new</strong></a> to create a new, blank Google Sheet. Give it a name (e.g., "LWS Data").</li>
+                    <li>Click the button below to copy the required spreadsheet <strong>headers</strong> (they will be copied with tabs between them).</li>
                     <li>In your new sheet, click <strong>once</strong> on cell <strong>A1</strong>.</li>
-                    <li><strong>Paste</strong> the copied text. The headers should automatically fill row 1 from cell A1 to S1.</li>
+                    <li><strong>Paste</strong> the copied text. The headers should automatically fill row 1 from cell A1 to S1.</li> 
                 </ol>
                 <div class="relative bg-gray-900 rounded-lg p-4 font-mono text-sm text-gray-400 pr-16 mb-4">
                     <button type="button" id="copyHeadersBtn" onclick="copyHeadersTabDelimited(this)" class="copy-btn">Copy</button>
                     {/* Display text shows commas, but copied text uses tabs */}
-                    <p id="headersDisplayText" class="overflow-x-auto">Date,Worker Name,Worker Phone Number,Emergency Contact Name,Emergency Contact Number,Emergency Contact Email,Escalation Contact Name,Escalation Contact Number,Escalation Contact Email,Location Name,Location Address,Arrival Time,Anticipated Departure Time,Actual Departure Time,Alarm Status,Notes,Last Known GPS,GPS Timestamp,Battery Level</p>
+                    <p id="headersDisplayText" class="overflow-x-auto">Date,Worker Name,Worker Phone Number,Emergency Contact Name,Emergency Contact Number,Emergency Contact Email,Escalation Contact Name,Escalation Contact Number,Escalation Contact Email,Location Name,Location Address,Arrival Time,Anticipated Departure Time,Actual Departure Time,Alarm Status,Notes,Last Known GPS,GPS Timestamp,Battery Level</p> 
                 </div>
                 <button type="button" onclick="nextStep()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg">Next Step</button>
             </div>
@@ -141,7 +141,7 @@
                         <input id="enableCheckin" type="checkbox" class="h-4 w-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500">
                         <label for="enableCheckin" class="ml-2 block text-sm font-medium text-gray-300">Enable "Are You OK?" Check-ins (Optional)</label>
                     </div>
-                     <div id="checkinIntervalDiv" class="hidden ml-6"> {/* Indented and initially hidden */}
+                     <div id="checkinIntervalDiv" class="hidden ml-6"> 
                         <label for="checkinInterval" class="block text-sm font-medium text-gray-300">Check-in Interval (Minutes)</label>
                         <input type="number" id="checkinInterval" value="30" min="5" class="mt-1 block w-48 bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                         <p class="text-xs text-gray-400 mt-1">If check-ins are enabled, how often should the worker be prompted? (e.g., 30)</p>
@@ -149,7 +149,7 @@
                      <div>
                         <label for="logoUrl" class="block text-sm font-medium text-gray-300">Company Logo URL (Optional)</label>
                         <input type="url" id="logoUrl" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="https://your-logo.com/image.png">
-                        <p class="text-xs text-gray-400 mt-1">If provided, this will replace the default icon for the Worker PWA and appear in the Monitor App header.</p> {/* Updated text */}
+                        <p class="text-xs text-gray-400 mt-1">If provided, this will replace the default icon for the Worker PWA and appear in the Monitor App header.</p> 
                     </div>
                 </div>
                 <button type="button" onclick="testAndProceed()" class="mt-8 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg">Test Connection & Proceed</button>
@@ -169,7 +169,7 @@
 <script>
     let currentStep = 1;
     const templates = {};
-    let templatesLoaded = false; // Flag to track loading status
+    let templatesLoaded = false; 
     const config = {
         secretKey: ""
     };
@@ -197,7 +197,7 @@
                 'monitor_app_template.txt',
                 'manifest.json',
                 'sw.js',
-                'Deployment_Admin_Guide.md', // Updated filename
+                'Deployment_Admin_Guide.md', 
                 'Installer Creation Guide.md',
                 'Promotional Blurb.md'
             ];
@@ -536,7 +536,7 @@
             statusEl.innerText = 'Processing Monitor App...';
             let monitorApp = templates['monitor_app_template.txt'];
             
-            // Inject Logo URL
+            // Inject Logo URL using its specific placeholder
             monitorApp = monitorApp.replace(/%%LOGO_URL%%/g, logoUrl); 
 
             // Remove setup page/logic
