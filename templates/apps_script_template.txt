@@ -27,7 +27,13 @@ function doGet(e) {
   var json = data.map(function(row) {
     var obj = {};
     headers.forEach(function(header, i) {
-      obj[header] = row[i];
+       // Format Date objects nicely if they are actual Date objects
+      if (row[i] instanceof Date) {
+           // Use ISO string for consistency, timezone might vary based on sheet settings
+          obj[header] = row[i].toISOString(); 
+      } else {
+          obj[header] = row[i];
+      }
     });
     return obj;
   });
@@ -52,13 +58,26 @@ function doPost(e) {
     var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     var arrivalTime = data["Arrival Time"];
     var workerName = data["Worker Name"];
+    var batteryLevelColIdx = headers.indexOf("Battery Level") + 1; // Get column index for Battery Level
 
     // Find existing row or create a new one
     var dataRange = sheet.getDataRange().getValues();
     var rowIndex = -1;
     for (var i = 1; i < dataRange.length; i++) {
-      var rowArrivalTime = new Date(dataRange[i][headers.indexOf("Arrival Time")]).toISOString();
-      if (dataRange[i][headers.indexOf("Worker Name")] === workerName && rowArrivalTime === arrivalTime) {
+       // More robust check for Arrival Time comparison
+      var rowArrivalTimeISO = "";
+      try {
+          if (dataRange[i][headers.indexOf("Arrival Time")] instanceof Date) {
+               rowArrivalTimeISO = dataRange[i][headers.indexOf("Arrival Time")].toISOString();
+          } else if (dataRange[i][headers.indexOf("Arrival Time")]) {
+               // Attempt to parse if it's a string
+               rowArrivalTimeISO = new Date(dataRange[i][headers.indexOf("Arrival Time")]).toISOString();
+          }
+      } catch (dateErr) {
+           Logger.log("Error parsing date in row " + (i+1) + ": " + dataRange[i][headers.indexOf("Arrival Time")]);
+      }
+
+      if (dataRange[i][headers.indexOf("Worker Name")] === workerName && rowArrivalTimeISO === arrivalTime) {
         rowIndex = i + 1;
         break;
       }
@@ -70,6 +89,18 @@ function doPost(e) {
         if (data[header] !== undefined) {
           var colIndex = headers.indexOf(header) + 1;
           sheet.getRange(rowIndex, colIndex).setValue(data[header]);
+
+           // --- ADDED: Parse and save numeric battery level ---
+           if (header === "Notes" && data[header] && batteryLevelColIdx > 0) {
+              var batteryMatch = data[header].match(/Battery: (\d+)%/);
+              if (batteryMatch && batteryMatch[1]) {
+                   var level = parseInt(batteryMatch[1], 10);
+                   if (!isNaN(level)) {
+                        sheet.getRange(rowIndex, batteryLevelColIdx).setValue(level);
+                   }
+              }
+           }
+           // --- END ADDED ---
         }
       });
     } else {
@@ -77,16 +108,36 @@ function doPost(e) {
       var newRow = headers.map(function(header) {
         return data[header] || "";
       });
+      // --- ADDED: Parse and set initial battery level for new row ---
+      if (data["Notes"] && batteryLevelColIdx > 0) {
+           var batteryMatch = data["Notes"].match(/Battery: (\d+)%/);
+           if (batteryMatch && batteryMatch[1]) {
+                var level = parseInt(batteryMatch[1], 10);
+                if (!isNaN(level)) {
+                     newRow[batteryLevelColIdx - 1] = level; // Array index is colIndex - 1
+                }
+           }
+      }
+      // --- END ADDED ---
       sheet.appendRow(newRow);
     }
 
     // Immediate alert triggers (from worker app)
     if (['EMERGENCY - PANIC BUTTON', 'DURESS_CODE_ACTIVATED', 'MISSED_CHECKIN'].indexOf(data['Alarm Status']) > -1) {
-      sendAlertEmail(data, data['Alarm Status']);
+      // Need to fetch the full worker data for the email function if it was an update
+      var workerDataForEmail = {};
+       if (rowIndex !== -1) {
+           var updatedRowValues = sheet.getRange(rowIndex, 1, 1, headers.length).getValues()[0];
+            headers.forEach(function(header, j) { workerDataForEmail[header] = updatedRowValues[j]; });
+       } else {
+           // If it was a new row, the incoming data is sufficient
+           workerDataForEmail = data; 
+       }
+      sendAlertEmail(workerDataForEmail, data['Alarm Status']);
     }
 
   } catch (err) {
-    Logger.log('Error in doPost: ' + err.toString());
+    Logger.log('Error in doPost: ' + err.toString() + ' | Data: ' + JSON.stringify(e.parameter));
   } finally {
     lock.releaseLock();
   }
@@ -120,25 +171,45 @@ function checkOverdueWorkers() {
       });
 
       var status = worker['Alarm Status'];
-      var anticipatedDeparture = new Date(worker['Anticipated Departure Time']);
+      
+      // Skip if resolved or essential data missing
+      if (resolvedStatuses.indexOf(status) !== -1 || !worker['Anticipated Departure Time']) continue; 
 
-      // Check if status is NOT in the resolved list and is overdue
-      if (resolvedStatuses.indexOf(status) === -1 && now > anticipatedDeparture) {
+      var anticipatedDeparture = null;
+      try {
+            anticipatedDeparture = new Date(worker['Anticipated Departure Time']);
+            // Check if date is valid
+            if (isNaN(anticipatedDeparture.getTime())) {
+                 Logger.log("Skipping row " + (i+1) + ": Invalid Anticipated Departure Time format - " + worker['Anticipated Departure Time']);
+                 continue; // Skip this row if date is invalid
+            }
+      } catch (dateErr) {
+            Logger.log("Skipping row " + (i+1) + ": Error parsing Anticipated Departure Time - " + worker['Anticipated Departure Time']);
+            continue; // Skip row on date parsing error
+      }
+
+
+      // Check if overdue
+      if (now > anticipatedDeparture) {
         var overdueMinutes = (now.getTime() - anticipatedDeparture.getTime()) / 60000;
         var alertToSend = null;
 
+        // Determine which alert level needs to be sent
         if (overdueMinutes >= 60 && status !== 'ESCALATION_SENT') {
           alertToSend = 'ESCALATION_SENT';
         } else if (overdueMinutes >= 45 && status !== 'EMAIL_3_SENT' && status !== 'ESCALATION_SENT') {
           alertToSend = 'EMAIL_3_SENT';
         } else if (overdueMinutes >= 30 && status !== 'EMAIL_2_SENT' && status !== 'EMAIL_3_SENT' && status !== 'ESCALATION_SENT') {
           alertToSend = 'EMAIL_2_SENT';
-        } else if (overdueMinutes >= 15 && status !== 'EMAIL_1_SENT' && status !== 'EMAIL_2_SENT' && status !== 'EMAIL_3_SENT' && status !== 'ESCALATION_SENT') {
+        } else if (overdueMinutes >= 15 && ['ON SITE', 'ALERT SENT'].includes(status) ) { 
+           // Only trigger EMAIL_1 if current status is ON SITE or ALERT SENT
           alertToSend = 'EMAIL_1_SENT';
         }
 
         if (alertToSend) {
           sheet.getRange(i + 1, headers.indexOf('Alarm Status') + 1).setValue(alertToSend);
+          // Update worker object with new status before sending email
+          worker['Alarm Status'] = alertToSend; 
           sendAlertEmail(worker, alertToSend);
         }
       }
@@ -161,9 +232,14 @@ function sendAlertEmail(workerData, alertType) {
 
   var locationName = workerData['Location Name'] || 'Not specified';
   var locationAddress = workerData['Location Address'] || 'Not specified';
-  var workerName = workerData['Worker Name'];
-  var workerPhone = workerData['Worker Phone Number'];
-  var anticipatedDeparture = new Date(workerData['Anticipated Departure Time']).toLocaleString();
+  var workerName = workerData['Worker Name'] || 'Unknown Worker';
+  var workerPhone = workerData['Worker Phone Number'] || 'Not specified';
+  var anticipatedDepartureStr = 'Not specified';
+   try {
+       if (workerData['Anticipated Departure Time']) {
+           anticipatedDepartureStr = new Date(workerData['Anticipated Departure Time']).toLocaleString();
+       }
+   } catch(e){ Logger.log("Could not format Anticipated Departure Time for email: " + workerData['Anticipated Departure Time']); }
 
   var locationLink = 'http://maps.google.com/?q=' + encodeURIComponent(locationAddress);
   if (workerData['Last Known GPS']) {
@@ -196,9 +272,13 @@ function sendAlertEmail(workerData, alertType) {
       subject = 'Overdue Alert: ' + workerName + ' is ' + minutesOverdue + '+ mins Overdue';
       body = '<p>' + workerName + ' is now more than ' + minutesOverdue + ' minutes overdue.</p>';
       break;
+    case 'ALERT SENT': // Handle case where worker app sends ALERT SENT directly
+         subject = 'Overdue Alert: ' + workerName + ' is overdue';
+         body = '<p>' + workerName + ' became overdue and triggered an initial alert state.</p>';
+         break;
     default: 
-      subject = 'LWS Alert for ' + workerName;
-      body = '<p>An automated alert (' + alertType + ') has been triggered for ' + workerName + '.</p>';
+      subject = 'LWS Alert (' + alertType + ') for ' + workerName;
+      body = '<p>An automated alert (' + alertType.replace(/_/g,' ') + ') has been triggered for ' + workerName + '.</p>';
       break;
   }
 
@@ -208,7 +288,7 @@ function sendAlertEmail(workerData, alertType) {
                    '<li><strong>Phone:</strong> ' + workerPhone + '</li>' +
                    '<li><strong>Location:</strong> ' + locationName + '</li>' +
                    '<li><strong>Address:</strong> ' + locationAddress + '</li>' +
-                   '<li><strong>Anticipated Departure:</strong> ' + anticipatedDeparture + '</li>' +
+                   '<li><strong>Anticipated Departure:</strong> ' + anticipatedDepartureStr + '</li>' +
                    '</ul><p style="font-size: 1.2em; font-weight: bold;"><a href="' + locationLink + '">View Location on Map</a></p>' +
                    '<p style="font-size: 0.8em; color: #888;">This is an automated message from the Lone Worker Safety System.</p></body></html>';
 
@@ -220,11 +300,11 @@ function sendAlertEmail(workerData, alertType) {
         htmlBody: fullBody,
         name: "LWS System Alert"
       });
-      Logger.log('Email sent to ' + recipient + ' for alert type ' + alertType);
+      Logger.log('Email sent to ' + recipient + ' for alert type ' + alertType + ' for worker ' + workerName);
     } catch (e) {
-      Logger.log('Failed to send email to ' + recipient + ': ' + e.toString());
+      Logger.log('Failed to send email to ' + recipient + ' for worker ' + workerName + ': ' + e.toString());
     }
   } else {
-    Logger.log('Cannot send email: No recipient found for alert type ' + alertType);
+    Logger.log('Cannot send email: No recipient found for alert type ' + alertType + ' for worker ' + workerName);
   }
 }
