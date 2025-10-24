@@ -48,13 +48,12 @@
             <button type="button" id="nav2" onclick="showStep(2)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 2: Sheet Setup</button>
             <button type="button" id="nav3" onclick="showStep(3)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 3: Deploy Script</button>
             <button type="button" id="nav4" onclick="showStep(4)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 4: Configure Apps</button>
-            <button type="button" id="nav5" onclick="showStep(5)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 5: Download Apps</button> {/* Text Updated */}
-            <button type="button" id="nav6" onclick="showStep(6)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 6: Documentation</button> {/* New Nav Button */}
+            <button type="button" id="nav5" onclick="showStep(5)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 5: Download Apps</button> <!-- Text Updated -->
+            <button type="button" id="nav6" onclick="showStep(6)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 6: Documentation</button> <!-- New Nav Button -->
         </div>
         
         <div class="p-6 md:p-8">
-            {/* Steps 1-4 remain identical to the previous version */}
-            {/* Step 1: Welcome */}
+            <!-- Step 1: Welcome -->
             <div id="step1" class="step active">
                 <h2 class="text-xl font-semibold mb-4 text-blue-300">Welcome to the LWS Setup Wizard</h2>
                 <p class="text-gray-300 mb-4">This tool will guide you through creating and customizing your Lone Worker Safety system. It will generate a <strong>`.zip`</strong> file containing the final, ready-to-host applications for your workers and monitors.</p>
@@ -62,7 +61,7 @@
                 <button type="button" onclick="nextStep()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg">Start Setup</button>
             </div>
 
-            {/* Step 2: Google Sheet Setup */}
+            <!-- Step 2: Google Sheet Setup -->
             <div id="step2" class="step">
                 <h2 class="text-xl font-semibold mb-4 text-blue-300">Step 2: Set Up Your Google Sheet</h2>
                  <ol class="list-decimal list-inside text-gray-300 space-y-3 mb-6">
@@ -73,13 +72,13 @@
                 </ol>
                 <div class="relative bg-gray-900 rounded-lg p-4 font-mono text-sm text-gray-400 pr-16 mb-4">
                     <button type="button" id="copyHeadersBtn" onclick="copyHeadersTabDelimited(this)" class="copy-btn">Copy</button>
-                    {/* Display text shows commas, but copied text uses tabs */}
+                    <!-- Display text shows commas, but copied text uses tabs -->
                     <p id="headersDisplayText" class="overflow-x-auto">Date,Worker Name,Worker Phone Number,Emergency Contact Name,Emergency Contact Number,Emergency Contact Email,Escalation Contact Name,Escalation Contact Number,Escalation Contact Email,Location Name,Location Address,Arrival Time,Anticipated Departure Time,Actual Departure Time,Alarm Status,Notes,Last Known GPS,GPS Timestamp,Battery Level</p> 
                 </div>
                 <button type="button" onclick="nextStep()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg">Next Step</button>
             </div>
 
-            {/* Step 3: Deploy Google Apps Script */}
+            <!-- Step 3: Deploy Google Apps Script -->
             <div id="step3" class="step">
                 <h2 class="text-xl font-semibold mb-4 text-blue-300">Step 3: Deploy the Backend Script</h2>
                 <ol class="list-decimal list-inside text-gray-300 space-y-3 mb-6">
@@ -120,7 +119,7 @@
                 <button type="button" onclick="nextStep()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg">Next Step</button>
             </div>
 
-            {/* Step 4: Configure Apps */}
+            <!-- Step 4: Configure Apps -->
             <div id="step4" class="step">
                 <h2 class="text-xl font-semibold mb-4 text-blue-300">Step 4: Configure Your Applications</h2>
                 <p class="text-gray-300 mb-6">Enter the values you just created. This will inject them into the final app files, removing the need for manual setup by your users.</p>
@@ -143,6 +142,7 @@
                         <input id="enableCheckin" type="checkbox" class="h-4 w-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500">
                         <label for="enableCheckin" class="ml-2 block text-sm font-medium text-gray-300">Enable "Are You OK?" Check-ins (Optional)</label>
                     </div>
+                     <!-- Corrected Comment Syntax -->
                      <div id="checkinIntervalDiv" class="hidden ml-6"> 
                         <label for="checkinInterval" class="block text-sm font-medium text-gray-300">Check-in Interval (Minutes)</label>
                         <input type="number" id="checkinInterval" value="30" min="5" class="mt-1 block w-48 bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
@@ -158,7 +158,7 @@
                 <p id="testStatus" class="text-center text-yellow-400 mt-4 h-4"></p>
             </div>
 
-            {/* Step 5: Download Apps - Text Updated */}
+            <!-- Step 5: Download Apps -->
             <div id="step5" class="step">
                 <h2 class="text-xl font-semibold mb-4 text-blue-300">Step 5: Download Your Customized Apps</h2>
                 <p class="text-gray-300 mb-6">Your configuration is correct. Click the button below to generate and download a <strong>`.zip`</strong> file containing your customized <strong>`LoneWorkerApp`</strong> and <strong>`MonitoringDashboardApp`</strong> folders, plus a backup of the script text.</p>
@@ -167,12 +167,12 @@
                  <button type="button" onclick="nextStep()" class="mt-6 w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg">Next Step: Documentation</button>
             </div>
 
-            {/* Step 6: Documentation (New) */}
+            <!-- Step 6: Documentation -->
             <div id="step6" class="step">
                 <h2 class="text-xl font-semibold mb-4 text-green-400">Setup Complete & Documentation</h2>
                  <p class="text-gray-300 mb-4">You have successfully generated the application package!</p>
                 <p class="text-gray-300 mb-6">For detailed instructions on how to host the downloaded app folders using GitHub Pages and distribute the links to your team, please download the full documentation PDF:</p>
-                {/* --- IMPORTANT: Update this href --- */}
+                <!-- --- IMPORTANT: Update this href --- -->
                 <a href="https://russell-netizen.github.io/LWSS/LWS_Documentation.pdf" download="LWS_Documentation.pdf" class="block w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg text-lg">
                     Download Full Documentation (PDF)
                 </a>
@@ -198,9 +198,8 @@
         const baseUrl = window.location.href; 
         const fetchTemplate = async (fileName) => {
             // Adjust path based on whether it's a doc or code template
-            const filePath = ['Deployment_Admin_Guide.md', 'Installer Creation Guide.md', 'Promotional Blurb.md'].includes(fileName) 
-                             ? `./templates/${fileName}` // Keep docs relative for potential future use
-                             : `./templates/${fileName}`; // Code templates relative path
+            // Now fetching ALL files again, as documentation files are needed for the PDF link text consistency check later
+            const filePath = `./templates/${fileName}`; 
             const templateUrl = new URL(filePath, baseUrl).href; 
             console.log(`Fetching: ${templateUrl}`); 
             const response = await fetch(templateUrl);
@@ -212,23 +211,22 @@
         };
 
         try {
-            // List only the templates needed for zip generation now
+            // List ALL templates again
             const templateFiles = [
                 'apps_script_template.txt',
                 'worker_app_template.txt',
                 'monitor_app_template.txt',
                 'manifest.json',
                 'sw.js',
-                // Documentation files are no longer directly fetched for zipping
-                // 'Deployment_Admin_Guide.md', 
-                // 'Installer Creation Guide.md',
-                // 'Promotional Blurb.md'
+                'Deployment_Admin_Guide.md', // Need this for generating PDF potentially
+                'Installer Creation Guide.md',
+                'Promotional Blurb.md'
             ];
             for (const file of templateFiles) {
                 await fetchTemplate(file);
             }
             
-            console.log('Core templates loaded successfully.');
+            console.log('All templates loaded successfully.');
             templatesLoaded = true; 
             
             const scriptPreviewEl = document.getElementById('scriptPreview');
@@ -254,7 +252,7 @@
         } catch (error) {
             console.error("Template Loading Error:", error); 
             templatesLoaded = false; 
-            alert(`Error: Could not load core template files. ${error.message}. Please ensure the 'templates' folder exists and contains required code files. Check console (F12) for details.`);
+            alert(`Error: Could not load template files. ${error.message}. Please ensure the 'templates' folder exists in the same directory as setup.html and contains all required files. Check the browser console (F12) for more details.`);
             document.querySelectorAll('button').forEach(btn => btn.disabled = true);
             const statusEl = document.getElementById('zipStatus') || document.getElementById('testStatus');
             if (statusEl) statusEl.innerText = "Error: Templates failed to load. Cannot proceed.";
@@ -283,7 +281,7 @@
     }
 
     function nextStep() {
-        if (!templatesLoaded && currentStep > 0) { // Allow starting even if templates fail later
+        if (!templatesLoaded && currentStep > 0) { 
              alert("Templates are still loading or failed to load. Please wait or check the console for errors.");
              return;
         }
@@ -297,7 +295,6 @@
             config.secretKey = keyInput.value;
         }
         
-        // --- UPDATED to handle 6 steps ---
         const maxSteps = 6;
         if (currentStep < maxSteps) {
             const nextNav = document.getElementById(`nav${currentStep + 1}`);
@@ -523,15 +520,15 @@
             if (!key) throw new Error("Secret Key is required (should be auto-filled).");
             if (!firstAlert) throw new Error("First Alert time is required.");
 
-            // Reduced required templates list
-            const requiredTemplates = [
+            // Reduced required templates list for zipping
+            const requiredZipTemplates = [
                  'worker_app_template.txt', 
                  'monitor_app_template.txt', 
                  'manifest.json', 
                  'sw.js', 
                  'apps_script_template.txt', 
             ];
-            for (const tpl of requiredTemplates) {
+            for (const tpl of requiredZipTemplates) {
                 if (!templates[tpl] || typeof templates[tpl] !== 'string') {
                     throw new Error(`Template file '${tpl}' not loaded or is not text. Cannot generate zip.`);
                 }
@@ -590,19 +587,13 @@
 
             // --- 5. Documentation Removed from Zip ---
             statusEl.innerText = 'Skipping documentation packaging...';
-            // const docFolder = zip.folder('Documentation');
-            // if (!docFolder) throw new Error("Could not create documentation folder in zip");
-            // docFolder.file('Deployment_Admin_Guide.md', templates['Deployment_Admin_Guide.md']); 
-            // docFolder.file('Installer Creation Guide.md', templates['Installer Creation Guide.md']);
-            // docFolder.file('Promotional Blurb.md', templates['Promotional Blurb.md']);
-
+            
             // --- 6. Generate and Download ---
             statusEl.innerText = 'Generating .zip file...';
             const content = await zip.generateAsync({ type: 'blob' });
             
             const a = document.createElement('a');
             a.href = URL.createObjectURL(content);
-            // Changed filename slightly to reflect content
             a.download = 'LWS_App_Package.zip'; 
             document.body.appendChild(a);
             a.click();
@@ -610,9 +601,7 @@
             URL.revokeObjectURL(a.href); 
 
             statusEl.innerText = 'App package download initiated!';
-            // Don't automatically go to next step, let user click
-            // nextStep(); // Removed this line
-
+            
         } catch (error) {
             console.error("Error during zip generation:", error);
             statusEl.innerText = `Error generating zip file: ${error.message}. See console for details.`;
