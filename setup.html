@@ -149,7 +149,8 @@
                         <input id="enableCheckin" type="checkbox" class="h-4 w-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500">
                         <label for="enableCheckin" class="ml-2 block text-sm font-medium text-gray-300">Enable "Are You OK?" Check-ins (Optional)</label>
                     </div>
-                     <div id="checkinIntervalDiv" class="hidden ml-6"> 
+                     <!-- === FIXED COMMENT SYNTAX === -->
+                     <div id="checkinIntervalDiv" class="hidden ml-6"> <!-- Indented and initially hidden -->
                         <label for="checkinInterval" class="block text-sm font-medium text-gray-300">Check-in Interval (Minutes)</label>
                         <input type="number" id="checkinInterval" value="30" min="5" class="mt-1 block w-48 bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                         <p class="text-xs text-gray-400 mt-1">If check-ins are enabled, how often should the worker be prompted? (e.g., 30)</p>
@@ -178,7 +179,7 @@
                 <h2 class="text-xl font-semibold mb-4 text-green-400">Setup Complete & Documentation</h2>
                  <p class="text-gray-300 mb-4">You have successfully generated the application package!</p>
                 <p class="text-gray-300 mb-6">For detailed instructions on how to host the downloaded app folders using GitHub Pages and distribute the links to your team, please download the full documentation PDF:</p>
-                <!-- --- IMPORTANT: Update this href --- -->
+                <!-- === FIXED COMMENT SYNTAX === -->
                 <a href="https://russell-netizen.github.io/LWSS/templates/LWS_Documentation.pdf" download="LWS_Documentation.pdf" class="block w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg text-lg">
                     Download Full Documentation (PDF)
                 </a>
@@ -221,9 +222,6 @@
                 'monitor_app_template.txt',
                 'manifest.json',
                 'sw.js'
-                // 'Deployment_Admin_Guide.md', // No longer fetched
-                // 'Installer Creation Guide.md', // No longer fetched
-                // 'Promotional Blurb.md' // No longer fetched
             ];
             for (const file of templateFiles) {
                 await fetchTemplate(file);
@@ -541,7 +539,7 @@
             workerApp = workerApp.replace(/%%FIRST_ALERT_MINUTES%%/g, firstAlert);
             workerApp = workerApp.replace(/%%CHECKIN_ENABLED%%/g, checkin);
             workerApp = workerApp.replace(/%%CHECKIN_INTERVAL%%/g, checkinInterval);
-            workerApp = workerApp.replace(/https://i\.postimg\.cc\/dVmVg3Pn\/favicon-logo-for-LWSApp\.png/g, logoUrl);
+            workerApp = workerApp.replace(/https:\/\/i\.postimg\.cc\/dVmVg3Pn\/favicon-logo-for-LWSApp\.png/g, logoUrl);
             workerApp = workerApp.replace(/%%GOOGLE_SHEET_URL%%/g, url);
             
             const workerFolder = zip.folder('LoneWorkerApp');
@@ -588,7 +586,7 @@
 
             // --- 5. Documentation Removed from Zip ---
             statusEl.innerText = 'Skipping documentation packaging...';
-            // --- FIXED: Removed buggy doc replace lines ---
+            // --- FIXED: Removed buggy doc replace lines that caused SyntaxError ---
              
             // --- 6. Generate and Download ---
             statusEl.innerText = 'Generating .zip file...';
