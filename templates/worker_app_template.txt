@@ -109,12 +109,12 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
 <div class="flex-1 overflow-y-auto -mx-4 px-4 min-h-0">
 <div class="space-y-4 mb-6">
 <div><label for="workerName" class="block text-sm font-medium text-gray-400">Your Name</label><input type="text" id="workerName" class="mt-1 block w-full bg-gray-900 border border-gray-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"></div>
-<div><label for="workerPhone" class="block text-sm font-medium text-gray-400">Your Phone Number</label><input type="tel" id="workerPhone" class="mt-1 block w-full bg-gray-900 border border-gray-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"></div>
+<div><label for="workerPhone" class="block text-sm font-medium text-gray-400">Your Phone Number</label><input type="tel" id="workerPhone" class="mt-1 block w-full bg-gray-900 border border-gray-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="e.g. +64 21 123 4567"></div>
 <div><label for="emergencyName" class="block text-sm font-medium text-gray-400">Emergency Contact Name</label><input type="text" id="emergencyName" class="mt-1 block w-full bg-gray-900 border border-gray-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"></div>
-<div><label for="emergencyPhone" class="block text-sm font-medium text-gray-400">Emergency Contact Phone</label><input type="tel" id="emergencyPhone" class="mt-1 block w-full bg-gray-900 border border-gray-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"></div>
+<div><label for="emergencyPhone" class="block text-sm font-medium text-gray-400">Emergency Contact Phone</label><input type="tel" id="emergencyPhone" class="mt-1 block w-full bg-gray-900 border border-gray-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="e.g. +64 22 123 4567"></div>
 <div><label for="emergencyEmail" class="block text-sm font-medium text-gray-400">Emergency Contact Email</label><input type="email" id="emergencyEmail" class="mt-1 block w-full bg-gray-900 border border-gray-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"></div>
 <div><label for="escalationName" class="block text-sm font-medium text-gray-400">Escalation Contact Name</label><input type="text" id="escalationName" class="mt-1 block w-full bg-gray-900 border border-gray-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"></div>
-<div><label for="escalationPhone" class="block text-sm font-medium text-gray-400">Escalation Contact Phone</label><input type="tel" id="escalationPhone" class="mt-1 block w-full bg-gray-900 border border-gray-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"></div>
+<div><label for="escalationPhone" class="block text-sm font-medium text-gray-400">Escalation Contact Phone</label><input type="tel" id="escalationPhone" class="mt-1 block w-full bg-gray-900 border border-gray-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="e.g. +64 27 123 4567"></div>
 <div><label for="escalationEmail" class="block text-sm font-medium text-gray-400">Escalation Contact Email</label><input type="email" id="escalationEmail" class="mt-1 block w-full bg-gray-900 border border-gray-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"></div>
 <div><label for="pinCode" class="block text-sm font-medium text-gray-400">Normal 4-Digit PIN</label><input type="password" id="pinCode" pattern="[0-9]*" inputmode="numeric" maxlength="4" class="mt-1 block w-full bg-gray-900 border border-gray-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"></div>
 <div><label for="duressPin" class="block text-sm font-medium text-gray-400">Duress 4-Digit PIN (Silent Alarm)</label><input type="password" id="duressPin" pattern="[0-9]*" inputmode="numeric" maxlength="4" class="mt-1 block w-full bg-gray-900 border border-gray-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"></div>
@@ -154,7 +154,8 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
             <ol class="list-decimal list-inside space-y-1">
                 <li>Tap the <strong>Settings icon</strong> (gear) in the top-right corner.</li>
                 <li>The **Google Sheet URL** field should already be filled in for you.</li>
-                <li>Fill in **all other fields** (Your Name, contacts, PIN, and Duress PIN).</li>
+                <li>Fill in **all other fields**. For phone numbers, please use the full international format (e.g., `+64 21 123 4567`).</li>
+                <li>Set both a **Normal PIN** and a separate **Duress PIN**.</li>
                 <li>Tap <strong>Save Settings</strong>.</li>
             </ol>
 
@@ -664,13 +665,13 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
                 const level = Math.floor(battery.level * 100);
                 let batteryNote = `Battery: ${level}%`;
                 let sendUpdate = false;
-                let batteryStatusChanged = false; // Flag to check if state needs saving
+                let batteryStatusChanged = false; 
                 
                 if (level < 15 && !battery.charging && !state.activeVisit.batteryAlertSent) {
                     batteryNote += " (LOW - WARNING)";
                     state.activeVisit.batteryAlertSent = true; 
                     sendUpdate = true;
-                    batteryStatusChanged = true; // Mark state changed
+                    batteryStatusChanged = true; 
                 } else if (!state.activeVisit.batteryAlertSent) { 
                     sendUpdate = true;
                 } 
@@ -721,7 +722,7 @@ header button svg, .edit-location-btn svg { pointer-events: none; }
     
     function triggerCheckin() {
         showModal('checkin');
-        let remaining = 120; // 2 minutes in seconds
+        let remaining = 120; 
         const totalDuration = 120; 
         const countdownEl = document.getElementById('checkinCountdown');
         countdownEl.textContent = '2:00';
