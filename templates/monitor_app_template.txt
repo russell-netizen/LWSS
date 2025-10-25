@@ -26,7 +26,6 @@
 
 <!-- SETUP_PAGE_START -->
 <div id="setupPage" class="h-full flex items-center justify-center p-4 bg-gray-900">
-    <!-- === FIXED COMMENT SYNTAX === -->
     <div class="w-full max-w-md text-center">
         <h1 class="text-3xl font-bold text-blue-400 mb-4">Monitoring Dashboard Setup</h1>
         <p class="text-gray-400 mb-6">Enter the Google Sheet Web App URL and the Secret Key to begin monitoring.</p>
@@ -42,7 +41,6 @@
             <button type="button" id="saveUrlBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg">Start Monitoring</button>
         </div>
     </div>
-    <!-- === END FIXED COMMENT SYNTAX === -->
 </div>
 <!-- SETUP_PAGE_END -->
 
@@ -349,28 +347,26 @@
 
         workers.forEach(worker => {
             let bgColor, textColor, borderColor, flashClass = '';
-            let isPreAlertOverdue = false; // --- NEW Flag ---
+            let isPreAlertOverdue = false; 
 
             const anticipatedTimeDT = new Date(worker['Anticipated Departure Time']);
-             // --- NEW: Check for Pre-Alert Overdue ---
              if (worker['Alarm Status'] === 'ON SITE' && now > anticipatedTimeDT) {
                   isPreAlertOverdue = true;
                   borderColor = 'border-amber-500'; // Amber border for pre-alert
-                  textColor = 'text-amber-100'; // Slightly lighter text
+                  textColor = 'text-amber-100'; 
              }
 
-            // Status colors override pre-alert border if needed
             switch(worker['Alarm Status']) {
                 case 'DURESS_CODE_ACTIVATED': bgColor = 'bg-purple-800'; textColor = 'text-white'; borderColor = 'border-purple-400'; flashClass = 'flashing-duress'; break;
                 case 'EMERGENCY - PANIC BUTTON': bgColor = 'bg-red-700'; textColor = 'text-white'; borderColor = 'border-red-400'; flashClass = 'flashing-alert'; break;
                 case 'ESCALATION_SENT':
                 case 'EMAIL_3_SENT': case 'EMAIL_2_SENT': case 'EMAIL_1_SENT':
                 case 'ALERT SENT': case 'MISSED_CHECKIN': bgColor = 'bg-yellow-700'; textColor = 'text-white'; borderColor = 'border-yellow-400'; break;
-                default: // ON SITE (unless pre-alert)
+                default: 
                      if (!isPreAlertOverdue) {
                          bgColor = 'bg-gray-700'; textColor = 'text-gray-300'; borderColor = 'border-transparent';
                      } else {
-                         bgColor = 'bg-gray-700'; // Keep base color gray
+                         bgColor = 'bg-gray-700'; 
                      }
             }
             
