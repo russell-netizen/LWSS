@@ -60,11 +60,22 @@ function doPost(e) {
     var workerName = data["Worker Name"];
     var batteryLevelColIdx = headers.indexOf("Battery Level") + 1; // Get column index for Battery Level
 
+    // --- ADDED: Force phone numbers to text by prepending a single quote ---
+    var phoneHeaders = ["Worker Phone Number", "Emergency Contact Number", "Escalation Contact Number"];
+    for (var key in data) {
+      if (phoneHeaders.indexOf(key) > -1 && data[key]) {
+        // Prepend single quote if it's not already there (e.g. from a + sign)
+        if (data[key].charAt(0) !== "'" && data[key].charAt(0) !== "+") {
+          data[key] = "'" + data[key];
+        }
+      }
+    }
+    // --- END ADDED ---
+
     // Find existing row or create a new one
     var dataRange = sheet.getDataRange().getValues();
     var rowIndex = -1;
     for (var i = 1; i < dataRange.length; i++) {
-       // More robust check for Arrival Time comparison
       var rowArrivalTimeISO = "";
       try {
           if (dataRange[i][headers.indexOf("Arrival Time")] instanceof Date) {
@@ -128,10 +139,22 @@ function doPost(e) {
       var workerDataForEmail = {};
        if (rowIndex !== -1) {
            var updatedRowValues = sheet.getRange(rowIndex, 1, 1, headers.length).getValues()[0];
-            headers.forEach(function(header, j) { workerDataForEmail[header] = updatedRowValues[j]; });
+            headers.forEach(function(header, j) { 
+                // Remove leading quote from phone numbers for email body
+                 if (phoneHeaders.indexOf(header) > -1 && typeof updatedRowValues[j] === 'string' && updatedRowValues[j].charAt(0) === "'") {
+                     workerDataForEmail[header] = updatedRowValues[j].substring(1);
+                 } else {
+                     workerDataForEmail[header] = updatedRowValues[j];
+                 }
+            });
        } else {
-           // If it was a new row, the incoming data is sufficient
-           workerDataForEmail = data; 
+           // If it was a new row, remove quotes from incoming data for email
+           workerDataForEmail = { ...data }; // Clone data
+            phoneHeaders.forEach(function(header) {
+                 if (workerDataForEmail[header] && typeof workerDataForEmail[header] === 'string' && workerDataForEmail[header].charAt(0) === "'") {
+                      workerDataForEmail[header] = workerDataForEmail[header].substring(1);
+                 }
+            });
        }
       sendAlertEmail(workerDataForEmail, data['Alarm Status']);
     }
@@ -159,6 +182,7 @@ function checkOverdueWorkers() {
     var data = dataRange.getValues();
     var headers = data[0];
     var now = new Date();
+    var phoneHeaders = ["Worker Phone Number", "Emergency Contact Number", "Escalation Contact Number"]; // Define here too
 
     // Define all "resolved" statuses
     var resolvedStatuses = ['DEPARTED', 'SAFE - MANUALLY CLEARED', 'MONITOR_CLEARED_ALERT'];
@@ -167,7 +191,12 @@ function checkOverdueWorkers() {
       var row = data[i];
       var worker = {};
       headers.forEach(function(header, j) {
-        worker[header] = row[j];
+        // Remove leading quote from phone numbers for email function
+        if (phoneHeaders.indexOf(header) > -1 && typeof row[j] === 'string' && row[j].charAt(0) === "'") {
+            worker[header] = row[j].substring(1);
+        } else {
+            worker[header] = row[j];
+        }
       });
 
       var status = worker['Alarm Status'];
@@ -272,7 +301,7 @@ function sendAlertEmail(workerData, alertType) {
       subject = 'Overdue Alert: ' + workerName + ' is ' + minutesOverdue + '+ mins Overdue';
       body = '<p>' + workerName + ' is now more than ' + minutesOverdue + ' minutes overdue.</p>';
       break;
-    case 'ALERT SENT': // Handle case where worker app sends ALERT SENT directly
+    case 'ALERT SENT': 
          subject = 'Overdue Alert: ' + workerName + ' is overdue';
          body = '<p>' + workerName + ' became overdue and triggered an initial alert state.</p>';
          break;
@@ -308,3 +337,4 @@ function sendAlertEmail(workerData, alertType) {
     Logger.log('Cannot send email: No recipient found for alert type ' + alertType + ' for worker ' + workerName);
   }
 }
+
