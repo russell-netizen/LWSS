@@ -48,8 +48,8 @@
             <button type="button" id="nav2" onclick="showStep(2)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 2: Sheet Setup</button>
             <button type="button" id="nav3" onclick="showStep(3)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 3: Deploy Script</button>
             <button type="button" id="nav4" onclick="showStep(4)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 4: Configure Apps</button>
-            <button type="button" id="nav5" onclick="showStep(5)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 5: Download Apps</button> <!-- Text Updated -->
-            <button type="button" id="nav6" onclick="showStep(6)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 6: Documentation</button> <!-- New Nav Button -->
+            <button type="button" id="nav5" onclick="showStep(5)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 5: Download Apps</button>
+            <button type="button" id="nav6" onclick="showStep(6)" class="px-3 py-2 text-sm font-medium rounded-md m-1 text-gray-400" disabled>Step 6: Documentation</button>
         </div>
         
         <div class="p-6 md:p-8">
@@ -142,7 +142,6 @@
                         <input id="enableCheckin" type="checkbox" class="h-4 w-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500">
                         <label for="enableCheckin" class="ml-2 block text-sm font-medium text-gray-300">Enable "Are You OK?" Check-ins (Optional)</label>
                     </div>
-                     <!-- Corrected Comment Syntax -->
                      <div id="checkinIntervalDiv" class="hidden ml-6"> 
                         <label for="checkinInterval" class="block text-sm font-medium text-gray-300">Check-in Interval (Minutes)</label>
                         <input type="number" id="checkinInterval" value="30" min="5" class="mt-1 block w-48 bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
@@ -197,10 +196,7 @@
     window.onload = async () => {
         const baseUrl = window.location.href; 
         const fetchTemplate = async (fileName) => {
-            // Adjust path based on whether it's a doc or code template
-            // Now fetching ALL files again, as documentation files are needed for the PDF link text consistency check later
-            const filePath = `./templates/${fileName}`; 
-            const templateUrl = new URL(filePath, baseUrl).href; 
+            const templateUrl = new URL(`templates/${fileName}`, baseUrl).href; 
             console.log(`Fetching: ${templateUrl}`); 
             const response = await fetch(templateUrl);
             if (!response.ok) {
@@ -211,14 +207,13 @@
         };
 
         try {
-            // List ALL templates again
             const templateFiles = [
                 'apps_script_template.txt',
                 'worker_app_template.txt',
                 'monitor_app_template.txt',
                 'manifest.json',
                 'sw.js',
-                'Deployment_Admin_Guide.md', // Need this for generating PDF potentially
+                'Deployment_Admin_Guide.md', 
                 'Installer Creation Guide.md',
                 'Promotional Blurb.md'
             ];
@@ -472,7 +467,6 @@
         document.body.appendChild(script);
     }
 
-    // --- UPDATED generateZip FUNCTION ---
     async function generateZip() {
          if (!templatesLoaded) {
              alert('Templates are still loading or failed to load. Cannot generate zip file.');
@@ -520,7 +514,6 @@
             if (!key) throw new Error("Secret Key is required (should be auto-filled).");
             if (!firstAlert) throw new Error("First Alert time is required.");
 
-            // Reduced required templates list for zipping
             const requiredZipTemplates = [
                  'worker_app_template.txt', 
                  'monitor_app_template.txt', 
@@ -540,7 +533,7 @@
             workerApp = workerApp.replace(/%%FIRST_ALERT_MINUTES%%/g, firstAlert);
             workerApp = workerApp.replace(/%%CHECKIN_ENABLED%%/g, checkin);
             workerApp = workerApp.replace(/%%CHECKIN_INTERVAL%%/g, checkinInterval);
-            workerApp = workerApp.replace(/https:\/\/i\.postimg\.cc\/dVmVg3Pn\/favicon-logo-for-LWSApp\.png/g, logoUrl);
+            workerApp = workerApp.replace(/https://i\.postimg\.cc\/dVmVg3Pn\/favicon-logo-for-LWSApp\.png/g, logoUrl);
             workerApp = workerApp.replace(/%%GOOGLE_SHEET_URL%%/g, url);
             
             const workerFolder = zip.folder('LoneWorkerApp');
@@ -615,3 +608,4 @@
 </script>
 </body>
 </html>
+
